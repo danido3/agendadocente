@@ -21,7 +21,9 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .class-2a{background:#dcebff;color:#2059a5;border:1px solid #a7c8f8}
 .class-4a{background:#ffe0d5;color:#a34224;border:1px solid #f5b7a1}
 .class-4b{background:#f0deff;color:#743a9e;border:1px solid #d9b8f2}
-</style></head><body><main><header><div><div class="muted">AGENDA IPIA · PLANNER SCOLASTICO · 3.1</div><h1 id="heading">Oggi</h1></div><button class="primary" onclick="openForm()">＋ Aggiungi</button></header>
+
+#endPicker, #endChoices button {font-weight:400 !important;}
+</style></head><body><main><header><div><div class="muted">AGENDA IPIA · PLANNER SCOLASTICO · 3.2</div><h1 id="heading">Oggi</h1></div><button class="primary" onclick="openForm()">＋ Aggiungi</button></header>
 <section id="today" class="view active"><p class="muted" id="todayDate"></p><div class="summary"><div><strong id="lc">0</strong><span class="muted">Ore di lezione</span></div><div><strong id="ec">0</strong><span class="muted">Impegni oggi</span></div></div><h2>Lezioni</h2><div id="todayLessons"></div><h2>Altri impegni</h2><div id="todayExtras"></div></section>
 <section id="week" class="view"><p class="muted">Imposta una volta l'orario: si ripeterà ogni settimana.</p><div id="weekList"></div></section>
 <section id="commitments" class="view"><p class="muted">Riunioni, colloqui, consigli di classe e scadenze.</p><div id="commitmentList"></div></section>
