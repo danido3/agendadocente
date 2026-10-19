@@ -28,22 +28,23 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .setting-group{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin:12px 0}.setting-line{display:flex;gap:8px;align-items:center;margin:8px 0}.setting-line input[type=color]{width:44px;height:42px;padding:3px;flex:none}.setting-line input[type=text]{min-width:0;flex:1}.setting-line button{flex:none}.setting-group h3{margin:0 0 8px;font-size:15px}.setting-group .hint{margin:6px 0}.setting-add{display:flex;gap:8px;margin-top:12px}.setting-add input{flex:1;min-width:0}.setting-add button{flex:none}
 .setup-message{border:1px solid #bdd9f8;background:#edf6ff;border-radius:12px;padding:12px;margin:12px 0;color:#254d7c}.setup-message p{font-size:13px;margin:7px 0 0}.setting-empty{font-size:12px;color:#77869b;padding:7px 0}/* Vista tabella settimanale compatta 4.0 */
 .week-scroll{width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;border-radius:14px;border:1px solid #dce5f0;background:#fff}
-.week-table{border-collapse:separate;border-spacing:3px;table-layout:fixed;min-width:520px;width:100%;font-size:11px}
+.week-table{border-collapse:separate;border-spacing:3px;table-layout:fixed;width:max-content;min-width:0;font-size:14px}
 .week-table th{background:#eaf0f9;color:#2d4766;font-weight:700;padding:6px 3px;white-space:nowrap}
-.week-table th:first-child,.week-table td:first-child{position:sticky;left:0;z-index:1;background:#f1f5fb;width:64px;min-width:64px;text-align:center}
+.week-table th:not(:first-child),.week-table td:not(:first-child){width:70px;min-width:70px;max-width:70px;overflow-wrap:anywhere}
+.week-table th:first-child,.week-table td:first-child{position:sticky;left:0;z-index:1;background:#f1f5fb;width:57px;min-width:57px;max-width:57px;text-align:center}
 .week-table th:first-child{z-index:2}
-.week-table td{padding:2px;vertical-align:middle;background:#f6f8fb;border-radius:5px;height:43px;text-align:center}
-.week-time{font-size:10px;line-height:1.2;color:#52637b;font-variant-numeric:tabular-nums}
+.week-table td{padding:2px;vertical-align:middle;background:#f6f8fb;border-radius:5px;height:76px;text-align:center}
+.week-time{font-size:12px;line-height:1.2;color:#52637b;font-variant-numeric:tabular-nums}
 .week-cell{display:flex;flex-direction:column;gap:2px}
-.week-lesson{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid transparent;border-radius:5px;padding:3px 2px;min-height:37px;color:#28374c;font-weight:400;cursor:pointer;white-space:normal}
+.week-lesson{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid transparent;border-radius:5px;padding:5px 2px;min-height:70px;color:#28374c;font-weight:400;cursor:pointer;white-space:normal}
 .week-lesson.lte{background:#fff0b8;border-color:#efd77d}.week-lesson.ttimd{background:#e2f4e7;border-color:#b9e4c6}
-.week-subject{font-size:11px;font-weight:650;line-height:1.15}.week-class{font-size:9px;padding:1px 3px;border-radius:4px;white-space:nowrap;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.week-subject{font-size:16px;font-weight:650;line-height:1.15;overflow-wrap:anywhere}.week-class{font-size:14px;padding:2px 3px;border-radius:4px;white-space:normal;overflow-wrap:anywhere;font-weight:600;max-width:100%;line-height:1.1}
 .week-class.class-2a{background:#dcebff;color:#2059a5}.week-class.class-4a{background:#ffe0d5;color:#a34224}.week-class.class-4b{background:#f0deff;color:#743a9e}
 .week-empty{color:#b5becb}.week-table td.week-spanning{vertical-align:middle}.week-table td.week-spanning .week-lesson{min-height:var(--lesson-span-height,80px)}.week-room{display:none}/* Aula e note restano accessibili toccando la lezione */
 
 .update-notice{position:fixed;left:12px;right:12px;bottom:88px;z-index:50;max-width:570px;margin:auto;padding:12px 14px;border:1px solid #bad4fa;border-radius:14px;background:#fff;box-shadow:0 7px 30px #1b305330;display:flex;gap:12px;align-items:center;justify-content:space-between}
 .update-notice[hidden]{display:none}.update-notice p{margin:4px 0 0;font-size:12px;color:#52657b}.update-notice button{flex:none;background:#214f9a;color:#fff}
-</style></head><body><main><header><div><div class="muted">AGENDA IPIA · PLANNER SCOLASTICO · 4.2</div><h1 id="heading">Oggi</h1></div><button class="primary" onclick="openForm()">＋ Aggiungi</button></header>
+</style></head><body><main><header><div><div class="muted">AGENDA IPIA · PLANNER SCOLASTICO · 4.3</div><h1 id="heading">Oggi</h1></div><button class="primary" onclick="openForm()">＋ Aggiungi</button></header>
 <section id="today" class="view active"><p class="muted" id="todayDate"></p><div class="summary"><div><strong id="lc">0</strong><span class="muted">Ore di lezione</span></div><div><strong id="ec">0</strong><span class="muted">Prossimi impegni</span></div></div><h2>Lezioni</h2><div id="todayLessons"></div><h2>Prossimi impegni</h2><div id="todayExtras"></div></section>
 <section id="week" class="view"><p class="muted">Orario settimanale · scorri la tabella lateralmente per vedere tutti i giorni. Tocca una lezione per modificarla.</p><div id="weekList"></div></section>
 <section id="commitments" class="view"><p class="muted">Riunioni, colloqui, consigli di classe e scadenze.</p><div id="commitmentList"></div></section>
@@ -115,7 +116,7 @@ const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.ge
        }
      }
      for(let j=i+1;j<i+span;j++)occupied[day].add(j);
-     return '<td'+(span>1?' rowspan="'+span+'" class="week-spanning" style="--lesson-span-height:'+(43*span-6)+'px"':'')+'><div class="week-cell">'+matches.map(lessonButton).join('')+'</div></td>';
+     return '<td'+(span>1?' rowspan="'+span+'" class="week-spanning" style="--lesson-span-height:'+(76*span-6)+'px"':'')+'><div class="week-cell">'+matches.map(lessonButton).join('')+'</div></td>';
    }).join('');
    return '<tr><td>'+label+'</td>'+cells+'</tr>';
  }).join('');
@@ -154,7 +155,7 @@ function importData(e){
   }catch(err){alert('Backup non valido o impossibile da ripristinare: '+err.message)}
  };r.readAsText(f);
 }
-const APP_VERSION='4.2';
+const APP_VERSION='4.3';
 let latestAppVersion=null;
 function versionParts(v){return String(v).split('.').map(x=>Number(x)||0)}
 function newerVersion(a,b){const aa=versionParts(a),bb=versionParts(b);for(let i=0;i<Math.max(aa.length,bb.length);i++){if((aa[i]||0)!==(bb[i]||0))return (aa[i]||0)>(bb[i]||0)}return false}
