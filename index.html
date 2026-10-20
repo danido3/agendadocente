@@ -34,7 +34,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .week-scroll{width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;border-radius:14px;border:1px solid #dce5f0;background:#fff}
 .week-table{border-collapse:separate;border-spacing:3px;table-layout:fixed;width:max-content;min-width:0;font-size:14px}
 .week-table th{background:#eaf0f9;color:#2d4766;font-weight:700;padding:6px 3px;white-space:nowrap}
-.week-table th:not(:first-child),.week-table td:not(:first-child){width:70px;min-width:70px;max-width:70px;overflow-wrap:anywhere}
+.week-table th:not(:first-child),.week-table td:not(:first-child){width:90px;min-width:90px;max-width:90px;overflow-wrap:anywhere}
 .week-table th:first-child,.week-table td:first-child{position:sticky;left:0;z-index:1;background:#f1f5fb;width:57px;min-width:57px;max-width:57px;text-align:center}
 .week-table th:first-child{z-index:2}
 .week-table td{padding:2px;vertical-align:middle;background:#f6f8fb;border-radius:5px;height:76px;text-align:center}
@@ -48,7 +48,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 
 .update-notice{position:fixed;left:12px;right:12px;bottom:88px;z-index:50;max-width:570px;margin:auto;padding:12px 14px;border:1px solid #bad4fa;border-radius:14px;background:#fff;box-shadow:0 7px 30px #1b305330;display:flex;gap:12px;align-items:center;justify-content:space-between}
 .update-notice[hidden]{display:none}.update-notice p{margin:4px 0 0;font-size:12px;color:#52657b}.update-notice button{flex:none;background:#214f9a;color:#fff}
-</style></head><body><main><header><div><div class="muted">AGENDA IPIA · PLANNER SCOLASTICO · 4.5</div><h1 id="heading">Oggi</h1></div><button class="primary" onclick="openForm()">＋ Aggiungi</button></header>
+</style></head><body><main><header><div><div class="muted">AGENDA IPIA · PLANNER SCOLASTICO · 4.6</div><h1 id="heading">Oggi</h1></div><button class="primary" onclick="openForm()">＋ Aggiungi</button></header>
 <section id="today" class="view active"><p class="muted" id="todayDate"></p><div class="summary"><div><strong id="lc">0</strong><span class="muted">Ore di lezione</span></div><div><strong id="ec">0</strong><span class="muted">Prossimi impegni</span></div></div><h2>Lezioni</h2><div id="todayLessons"></div><h2>Prossimi impegni</h2><div id="todayExtras"></div></section>
 <section id="week" class="view"><p class="muted">Orario settimanale · scorri la tabella lateralmente per vedere tutti i giorni. Tocca una lezione per modificarla.</p><div id="weekList"></div></section>
 <section id="commitments" class="view"><p class="muted">Riunioni, colloqui, consigli di classe e scadenze.</p><div id="commitmentList"></div></section>
@@ -182,7 +182,7 @@ function importData(e){
   }catch(err){alert('Backup non valido o impossibile da ripristinare: '+err.message)}
  };r.readAsText(f);
 }
-const APP_VERSION='4.5';
+const APP_VERSION='4.6';
 let latestAppVersion=null;
 function versionParts(v){return String(v).split('.').map(x=>Number(x)||0)}
 function newerVersion(a,b){const aa=versionParts(a),bb=versionParts(b);for(let i=0;i<Math.max(aa.length,bb.length);i++){if((aa[i]||0)!==(bb[i]||0))return (aa[i]||0)>(bb[i]||0)}return false}
