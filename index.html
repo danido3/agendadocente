@@ -48,14 +48,58 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 
 .update-notice{position:fixed;left:12px;right:12px;bottom:88px;z-index:50;max-width:570px;margin:auto;padding:12px 14px;border:1px solid #bad4fa;border-radius:14px;background:#fff;box-shadow:0 7px 30px #1b305330;display:flex;gap:12px;align-items:center;justify-content:space-between}
 .update-notice[hidden]{display:none}.update-notice p{margin:4px 0 0;font-size:12px;color:#52657b}.update-notice button{flex:none;background:#214f9a;color:#fff}
-</style></head><body><main><header><div><div class="muted">AGENDA IPIA · PLANNER SCOLASTICO · 4.6</div><h1 id="heading">Oggi</h1></div><button class="primary" onclick="openForm()">＋ Aggiungi</button></header>
+
+/* Agenda IPIA 4.7 — tema Naturale; colori personali di lezioni e impegni preservati */
+:root{background:#f8f6f1;color:#34382f}
+body{background:linear-gradient(180deg,#f0f2e9 0,#f8f6f1 285px);min-height:100vh}
+header h1{color:#343f35;letter-spacing:-.6px}
+h2{color:#35483c;letter-spacing:-.25px}
+.muted,.hint{color:#737e72}
+.summary>div{background:#fffefa;border-color:#e7e8dc;border-radius:21px;box-shadow:0 5px 18px #475a3810}
+.summary strong{color:#66806b}
+.card{border-radius:22px;box-shadow:0 7px 22px #4b563313;border-color:#e1e6d9}
+.card.lesson-lte{background:#f6e5be;border-color:#e9d5a4}
+.card.lesson-ttimd{background:#dce9d4;border-color:#c8ddc2}
+.card.school-event{background:#e7dfec;border-color:#d7cadd}
+.card.lesson-lte::before{background:#cda55c}.card.lesson-ttimd::before{background:#83a886}
+.card.school-event::before{background:#9d83ae}
+.card.lesson-lte .time{color:#80632d}.card.lesson-ttimd .time{color:#46734e}
+.card.school-event .time{color:#745a84}
+.card .meta{color:#4d594e}.card .note{color:#58635a}
+.card .small{background:#ffffffbd;color:#48594b}
+.btn,button{background:#e9eee5;color:#536e59;border-radius:13px}
+.primary{background:#758b70;color:#fff}
+.nav{background:#fffefa;border-top-color:#e5e8df}
+.nav button{color:#7b897c;border-radius:13px}
+.nav button.active{background:#e6eee3;color:#506e54}
+.chip{background:#e6eee3;color:#506e54}
+.setting-group,form,.empty{background:#fffefa;border-color:#e5e8dd;border-radius:19px;box-shadow:0 3px 13px #4b56330b}
+input,select,textarea{border-color:#d8dfd3;background:#fffefa;color:#344238}
+button:focus-visible,input:focus-visible,select:focus-visible{outline-color:#8aa68a}
+.week-scroll{border-color:#e0e5d8;background:#fffefa;border-radius:17px}
+.week-table th{background:#e7ede2;color:#48614d}
+.week-table th:first-child,.week-table td:first-child{background:#edf0e8}
+.week-table td{background:#f5f6ef}
+.week-lesson{border-radius:9px}
+.week-lesson.lte{background:#f6e5be;border-color:#e9d5a4}
+.week-lesson.ttimd{background:#dce9d4;border-color:#c8ddc2}
+.week-time{color:#637263}
+/* I colori personalizzati sono applicati via stile inline e restano prioritari. */
+
+/* Agenda IPIA 4.8 — evidenziazione del giorno e icone coordinate */
+.week-table th.week-current-day{background:#e2ebdd;color:#52785a;position:relative;box-shadow:inset 0 -4px 0 #729777}
+.nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#879488}
+.nav button.active{color:#557b5d;background:#e5ede1}
+.nav-icon{display:block;width:23px;height:23px;flex:none}
+.nav button span{font-size:12px;line-height:1.15}
+</style></head><body><main><header><div><div class="muted">AGENDA IPIA · PLANNER SCOLASTICO · 4.8</div><h1 id="heading">Oggi</h1></div><button class="primary" onclick="openForm()">＋ Aggiungi</button></header>
 <section id="today" class="view active"><p class="muted" id="todayDate"></p><div class="summary"><div><strong id="lc">0</strong><span class="muted">Ore di lezione</span></div><div><strong id="ec">0</strong><span class="muted">Prossimi impegni</span></div></div><h2>Lezioni</h2><div id="todayLessons"></div><h2>Prossimi impegni</h2><div id="todayExtras"></div></section>
 <section id="week" class="view"><p class="muted">Orario settimanale · scorri la tabella lateralmente per vedere tutti i giorni. Tocca una lezione per modificarla.</p><div id="weekList"></div></section>
 <section id="commitments" class="view"><p class="muted">Riunioni, colloqui, consigli di classe e scadenze.</p><div id="commitmentList"></div></section>
 <section id="settings" class="view"><h2>Gestione dati</h2><p class="hint">I dati sono salvati localmente nel browser su questo dispositivo. Non sono sincronizzati tra dispositivi. Non eliminare i dati del sito senza prima esportare una copia.</p><button onclick="exportData()">Esporta backup completo</button> <button onclick="document.getElementById('importFile').click()">Ripristina backup</button><p class="hint">Il file JSON comprende lezioni, impegni, materie, classi, aule, note e colori personalizzati. Conservalo su iCloud Drive o Google Drive. Il ripristino sostituisce i dati attuali solo dopo conferma.</p><input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"><h2>Personalizzazione</h2><p class="hint">Al primo utilizzo aggiungi liberamente le tue materie e classi nei campi qui sotto, premendo ＋ per ciascuna voce. Aule e note predefinite sono facoltative. Ogni docente avrà i propri elenchi su questo dispositivo.</p><div id="setupMessage" class="setup-message" hidden><strong>Benvenuto in Agenda IPIA!</strong><p>Per cominciare, inserisci almeno una materia e una classe negli elenchi sottostanti. Non ci sono voci preimpostate.</p></div><div id="personalization"></div><div class="setting-group event-color-settings"><h3>Colori degli impegni</h3><p class="hint">Personalizza lo sfondo di tutti gli impegni e il bordo che evidenzia quelli di oggi nella pagina Oggi.</p><div class="event-color-setting"><label for="eventBackground">Sfondo degli impegni</label><input type="color" id="eventBackground" aria-label="Colore di sfondo degli impegni" onchange="changeEventColor('background',this.value)"></div><div class="event-color-setting"><label for="eventTodayBorder">Bordo degli impegni di oggi</label><input type="color" id="eventTodayBorder" aria-label="Colore del bordo degli impegni di oggi" onchange="changeEventColor('todayBorder',this.value)"></div><p class="hint">Le modifiche vengono salvate automaticamente su questo dispositivo e incluse nel backup.</p></div><button onclick="exportConfig()">Esporta personalizzazioni</button> <button onclick="document.getElementById('configFile').click()">Importa personalizzazioni</button><input id="configFile" type="file" accept="application/json" style="display:none" onchange="importConfig(event)"><h2>Ripristino</h2><button class="danger" onclick="clearData()">Cancella tutti i dati</button></section>
 <section id="editor" class="view"><h2 id="formHeading">Nuova voce</h2><form id="entryForm"><label for="type">Tipo</label><select id="type" onchange="toggleFields()"><option value="lesson">Lezione settimanale</option><option value="event">Impegno scolastico</option></select><div id="weeklyFields"><label for="day">Giorno della settimana</label><select id="day"><option value="1">Lunedì</option><option value="2">Martedì</option><option value="3">Mercoledì</option><option value="4">Giovedì</option><option value="5">Venerdì</option><option value="6">Sabato</option></select></div><div id="dateFields" style="display:none"><label for="date">Data</label><input id="date" type="date"></div><div class="row"><div><label for="start">Dalle</label><select id="start" required ></select></div><div><label for="end">Alle</label><select id="end" required aria-label="Seleziona liberamente l’orario di fine" style="display:none"></select><button id="endPicker" type="button" aria-label="Scegli orario di fine" aria-expanded="false" onclick="toggleEndPicker()" style="width:100%;min-height:50px;text-align:left;background:white;border:1px solid #d5dfed;border-radius:12px;color:#22314a;padding:10px 14px;font-size:18px">09:20 ▾</button><div id="endChoices" hidden style="background:white;border:1px solid #d5dfed;border-radius:12px;margin-top:5px;max-height:240px;overflow:auto"></div></div></div><label for="subject">Materia / Impegno</label><select id="lessonSubject"></select><input id="subject" maxlength="80" placeholder="Es. Consiglio di classe" required style="display:none"><div class="row"><div><label for="classroom">Classe</label><select id="lessonClass"></select><input id="classroom" maxlength="30" placeholder="Classe (facoltativa)" style="display:none"></div><div><label for="room">Aula / Luogo</label><input id="room" list="roomOptions" maxlength="60" placeholder="Seleziona o scrivi un’aula"><datalist id="roomOptions"></datalist></div></div><label for="note">Nota breve</label><select id="presetNote" onchange="choosePresetNote()"><option value="">Nota libera / nessuna nota</option></select><input id="note" maxlength="100" placeholder="Scrivi o modifica la nota"><div class="row" style="margin-top:18px"><button type="button" onclick="navigate('today')">Annulla</button><button class="primary" type="submit">Salva</button></div></form></section></main>
 <div id="updateNotice" class="update-notice" hidden role="status" aria-live="polite"><div><strong>Nuova versione disponibile</strong><p id="updateDescription">Puoi aggiornare Agenda IPIA senza perdere i dati salvati.</p></div><button type="button" id="applyUpdate" onclick="applyAppUpdate()">Aggiorna</button></div>
-<nav class="nav"><button data-page="today" class="active" onclick="navigate('today')">◷<br>Oggi</button><button data-page="week" onclick="navigate('week')">▦<br>Settimana</button><button data-page="commitments" onclick="navigate('commitments')">☑<br>Impegni</button><button data-page="settings" onclick="navigate('settings')">⚙<br>Impostazioni</button></nav>
+<nav class="nav"><button data-page="today" class="active" onclick="navigate('today')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7"/><path d="M5 9v12h14V9"/><path d="M9 21v-7h6v7"/></svg><span>Oggi</span></button><button data-page="week" onclick="navigate('week')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><span>Settimana</span></button><button data-page="commitments" onclick="navigate('commitments')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6M9 11h6M9 15h6"/><path d="m7 11 1 1 2-2"/></svg><span>Impegni</span></button><button data-page="settings" onclick="navigate('settings')"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg><span>Impostazioni</span></button></nav>
 <script>
 const CONFIG_KEY='agenda-ipia-config-v1';
 const defaultConfig={subjects:[],classes:[],rooms:[],notes:[],eventStyle:{background:'#f0e9fb',todayBorder:'#e8a43a'}};
@@ -114,7 +158,8 @@ $('commitmentList').innerHTML=all.length?'<h3>In programma ('+upcoming.length+')
  const endings=['09:20','10:20','11:20','12:20','13:20','14:20'];
  const extra=lessons.map(x=>x.start).filter(t=>t&&!starts.includes(t));
  const slots=[...new Set([...starts,...extra])].sort();
- const head='<thead><tr><th scope="col">Ora</th>'+weekdays.map(d=>'<th scope="col">'+safe(days[d])+'</th>').join('')+'</tr></thead>';
+ const currentWeekday=new Date().getDay();
+ const head='<thead><tr><th scope="col">Ora</th>'+weekdays.map(d=>'<th scope="col"'+(d===currentWeekday?' class="week-current-day" aria-current="date"':'')+'>'+safe(days[d])+'</th>').join('')+'</tr></thead>';
  // Una cella che copre più fasce orarie usa rowspan; le righe successive
  // non creano un'altra cella nello stesso giorno.
  const occupied=Object.fromEntries(weekdays.map(d=>[d,new Set()]));
@@ -182,7 +227,7 @@ function importData(e){
   }catch(err){alert('Backup non valido o impossibile da ripristinare: '+err.message)}
  };r.readAsText(f);
 }
-const APP_VERSION='4.6';
+const APP_VERSION='4.8';
 let latestAppVersion=null;
 function versionParts(v){return String(v).split('.').map(x=>Number(x)||0)}
 function newerVersion(a,b){const aa=versionParts(a),bb=versionParts(b);for(let i=0;i<Math.max(aa.length,bb.length);i++){if((aa[i]||0)!==(bb[i]||0))return (aa[i]||0)>(bb[i]||0)}return false}
