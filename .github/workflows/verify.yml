@@ -1,0 +1,36 @@
+name: Verifica Agenda IPIA
+on:
+  push:
+    branches: [stabilizzazione-v4.9]
+  pull_request:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verifica sintassi JavaScript
+        run: |
+          node --check js/app.js
+          node --check sw.js
+      - name: Verifica file e riferimenti
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const html = fs.readFileSync('index.html','utf8');
+          const sw = fs.readFileSync('sw.js','utf8');
+          for (const file of ['css/styles.css','js/app.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png']) {
+            assert(fs.existsSync(file), `File mancante: ${file}`);
+          }
+          assert(html.includes('href="css/styles.css"'), 'CSS non collegato');
+          assert(html.includes('src="js/app.js"'), 'JavaScript non collegato');
+          assert(sw.includes("'./css/styles.css'"), 'CSS assente dalla cache offline');
+          assert(sw.includes("'./js/app.js'"), 'JS assente dalla cache offline');
+          JSON.parse(fs.readFileSync('manifest.webmanifest','utf8'));
+          JSON.parse(fs.readFileSync('version.json','utf8'));
+          console.log('Verifiche statiche superate');
+          NODE
