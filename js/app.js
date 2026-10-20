@@ -101,7 +101,9 @@ function toggleFields(){const lesson=$('type').value==='lesson';$('weeklyFields'
     a.href=url;a.download='agenda-ipia-backup-'+localDate()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   }catch(err){alert('Impossibile esportare il backup: '+err.message)}
 }
-function validEntries(arr){return Array.isArray(arr)&&arr.length<=20000&&arr.every(x=>x&&typeof x==='object'&&typeof x.id==='string'&&['lesson','event'].includes(x.type)&&typeof x.subject==='string'&&typeof x.start==='string'&&typeof x.end==='string'&&/^\d{2}:\d{2}$/.test(x.start)&&/^\d{2}:\d{2}$/.test(x.end))}
+function validTime(value){if(typeof value!=='string'||!/^\\d{2}:\\d{2}$/.test(value))return false;const [h,m]=value.split(':').map(Number);return h>=0&&h<=23&&m>=0&&m<=59}
+function validDate(value){if(typeof value!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return false;const [y,m,d]=value.split('-').map(Number);const date=new Date(y,m-1,d);return date.getFullYear()===y&&date.getMonth()===m-1&&date.getDate()===d}
+function validEntries(arr){if(!Array.isArray(arr)||arr.length>20000)return false;const ids=new Set();return arr.every(x=>{if(!x||typeof x!=='object'||typeof x.id!=='string'||!x.id||ids.has(x.id)||!['lesson','event'].includes(x.type)||typeof x.subject!=='string'||!x.subject.trim()||!validTime(x.start)||!validTime(x.end)||x.end<=x.start)return false;ids.add(x.id);return x.type==='lesson'?['1','2','3','4','5','6'].includes(String(x.day)):(validDate(x.date))})}
 function validPersonalization(v){return v&&typeof v==='object'&&!Array.isArray(v)&&['subjects','classes','rooms','notes'].every(k=>Array.isArray(v[k])&&v[k].length<=80&&v[k].every(x=>(k==='subjects'||k==='classes')?(x&&typeof x.name==='string'&&typeof x.color==='string'):typeof x==='string'))}
 function importData(e){
  const f=e.target.files?.[0];e.target.value='';if(!f)return;
