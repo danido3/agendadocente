@@ -3,7 +3,7 @@ const CONFIG_KEY='agenda-ipia-config-v1';
 const defaultConfig={subjects:[],commitments:[],classes:[],rooms:[],notes:[],eventStyle:{background:'#f0e9fb',todayBorder:'#e8a43a'}};
 function normalizeConfig(v){const result=JSON.parse(JSON.stringify(defaultConfig));if(!v||typeof v!=='object')return result;for(const k of ['subjects','commitments','classes','rooms','notes'])if(Array.isArray(v[k])){const seen=new Set();result[k]=v[k].filter(x=>{const n=typeof x==='string'?x:x?.name;const valid=typeof n==='string'&&n.trim().length>0&&!seen.has(n.trim().toLowerCase());if(valid)seen.add(n.trim().toLowerCase());return valid}).slice(0,80).map(x=>k==='subjects'||k==='classes'?{name:String(x.name).slice(0,60),color:/^#[0-9a-f]{6}$/i.test(x.color)?x.color:(k==='subjects'?'#eaf2fc':'#dcebff')}:String(x).slice(0,100))}if(v.eventStyle&&typeof v.eventStyle==='object'){for(const k of ['background','todayBorder'])if(typeof v.eventStyle[k]==='string'&&/^#[0-9a-f]{6}$/i.test(v.eventStyle[k]))result.eventStyle[k]=v.eventStyle[k]}return result}
 let config=normalizeConfig(null);try{config=normalizeConfig(JSON.parse(localStorage.getItem(CONFIG_KEY)||'null'))}catch(e){}
-function saveConfig(){localStorage.setItem(CONFIG_KEY,JSON.stringify(config));populateChoices();renderSettings();render()}
+function saveConfig(){beforeAgendaChange();localStorage.setItem(CONFIG_KEY,JSON.stringify(config));populateChoices();renderSettings();render()}
 function findColor(group,name,fallback){return config[group].find(x=>x.name===name)?.color||fallback}
 function inkFor(bg){if(!/^#[0-9a-f]{6}$/i.test(bg))return '#1e293b';const rgb=[1,3,5].map(i=>parseInt(bg.slice(i,i+2),16)/255).map(c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>.19?'#253348':'#ffffff'}
 function styleColor(bg){return 'background:'+bg+';color:'+inkFor(bg)+';border-color:'+bg}
@@ -18,7 +18,7 @@ function changeSetting(group,index,field,value){const arr=config[group];if(!arr|
   // Mantieni intatti gli impegni scolastici, anche con nomi coincidenti.
   const fieldName=group==='subjects'?'subject':'classroom';
   const updated=data.map(entry=>entry.type==='lesson'&&entry[fieldName]===previousName?{...entry,[fieldName]:value}:entry);
-  try{localStorage.setItem(KEY,JSON.stringify(updated))}catch(e){alert('Impossibile salvare le lezioni aggiornate. Riprova dopo aver liberato spazio.');renderSettings();return}
+  try{beforeAgendaChange();localStorage.setItem(KEY,JSON.stringify(updated))}catch(e){alert('Impossibile salvare le lezioni aggiornate. Riprova dopo aver liberato spazio.');renderSettings();return}
   data=updated;
  }
  arr[index].name=value;
@@ -35,20 +35,83 @@ if(!localStorage.getItem(CONFIG_KEY)&&data.some(x=>x.type==='lesson')){
  const classes=[...new Set(data.filter(x=>x.type==='lesson').map(x=>x.classroom).filter(Boolean))];
  config.subjects=subjects.map(name=>({name,color:previousSubjectColors[name]||'#eaf2fc'}));
  config.classes=classes.map(name=>({name,color:previousClassColors[name]||'#dcebff'}));
- localStorage.setItem(CONFIG_KEY,JSON.stringify(config));
+ beforeAgendaChange();localStorage.setItem(CONFIG_KEY,JSON.stringify(config));
 }
-const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));function save(){localStorage.setItem(KEY,JSON.stringify(data));render()};function navigate(page){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===page));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('heading').textContent=({today:'Oggi',week:'Settimana',commitments:'Impegni',settings:'Impostazioni',editor:'Modifica agenda'})[page];window.scrollTo(0,0);if(page==='settings')renderSettings();if(page!=='editor')render()};function card(x,highlightToday=false){const todayEvent=x.type==='event'&&highlightToday;const style=x.type==='lesson'?styleColor(findColor('subjects',x.subject,'#eaf2fc')):'background:'+config.eventStyle.background+';border-color:'+(todayEvent?config.eventStyle.todayBorder:config.eventStyle.background)+';--today-border:'+config.eventStyle.todayBorder;return `<div class="card ${x.type==='lesson'?'personal-lesson':'school-event'}${todayEvent?' event-today':''}" style="${style}"><div class="time">${safe(x.start)}<br>${safe(x.end)}</div><div class="content">${todayEvent?'<span class="today-label">OGGI</span>':''}<strong>${safe(x.subject)}</strong>${x.classroom||x.room?`<div class="meta">${x.classroom?(x.type==='lesson'?'<span class="class-badge" style="'+styleColor(findColor('classes',x.classroom,'#eaf2fc'))+'">'+safe(x.classroom)+'</span>':'Classe '+safe(x.classroom)):''}${x.classroom&&x.room?' · ':''}${x.room?safe(x.room):''}</div>`:''}${x.note?`<div class="note">✎ ${safe(x.note)}</div>`:''}</div><div class="actions"><button class="small" onclick="editEntry('${x.id}')" aria-label="Modifica">✎</button><button class="small" onclick="duplicateEntry('${x.id}')" aria-label="Duplica" title="Duplica">⧉</button><button class="small danger" onclick="removeEntry('${x.id}')" aria-label="Elimina">×</button></div></div>`};function list(a){return a.length?a.sort((x,y)=>x.start.localeCompare(y.start)).map(card).join(''):'<div class="empty">Nessuna voce inserita.</div>'};function lessonHours(entry){
+const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));function save(){beforeAgendaChange();localStorage.setItem(KEY,JSON.stringify(data));render()};function navigate(page){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===page));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('heading').textContent=({today:'Oggi',week:'Settimana',commitments:'Impegni',month:'Mese',settings:'Impostazioni',editor:'Modifica agenda'})[page];window.scrollTo(0,0);if(page==='settings'){renderSettings();renderBackupList();}if(page!=='editor')render()};function card(x,highlightToday=false){const todayEvent=x.type==='event'&&highlightToday;const style=x.type==='lesson'?styleColor(findColor('subjects',x.subject,'#eaf2fc')):'background:'+config.eventStyle.background+';border-color:'+(todayEvent?config.eventStyle.todayBorder:config.eventStyle.background)+';--today-border:'+config.eventStyle.todayBorder;return `<div class="card ${x.type==='lesson'?'personal-lesson':'school-event'}${todayEvent?' event-today':''}" style="${style}"><div class="time">${safe(x.start)}<br>${safe(x.end)}</div><div class="content">${todayEvent?'<span class="today-label">OGGI</span>':''}<strong>${safe(x.subject)}</strong>${x.classroom||x.room?`<div class="meta">${x.classroom?(x.type==='lesson'?'<span class="class-badge" style="'+styleColor(findColor('classes',x.classroom,'#eaf2fc'))+'">'+safe(x.classroom)+'</span>':'Classe '+safe(x.classroom)):''}${x.classroom&&x.room?' · ':''}${x.room?safe(x.room):''}</div>`:''}${x.note?`<div class="note">✎ ${safe(x.note)}</div>`:''}</div><div class="actions"><button class="small" onclick="editEntry('${x.id}')" aria-label="Modifica">✎</button><button class="small" onclick="duplicateEntry('${x.id}')" aria-label="Duplica" title="Duplica">⧉</button><button class="small danger" onclick="removeEntry('${x.id}')" aria-label="Elimina">×</button></div></div>`};function list(a){return a.length?a.sort((x,y)=>x.start.localeCompare(y.start)).map(card).join(''):'<div class="empty">Nessuna voce inserita.</div>'};function lessonHours(entry){
  const toMinutes=t=>{const m=/^(\d{2}):(\d{2})$/.exec(t||'');return m?Number(m[1])*60+Number(m[2]):NaN};
  const minutes=toMinutes(entry.end)-toMinutes(entry.start);
  return Number.isFinite(minutes)&&minutes>0?minutes/60:0;
 }
 function formatHours(hours){return Number(hours.toFixed(2)).toLocaleString('it-IT',{maximumFractionDigits:2})}
-function render(){const now=new Date(),dow=now.getDay(),date=localDate();$('todayDate').textContent=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});const lessons=data.filter(x=>x.type==='lesson'&&Number(x.day)===dow);const currentTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');const extras=data.filter(x=>x.type==='event'&&x.date&&(x.date>date||(x.date===date&&(x.end||x.start||'00:00')>=currentTime))).sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));$('lc').textContent=formatHours(lessons.reduce((total,x)=>total+lessonHours(x),0));$('ec').textContent=extras.length;$('todayLessons').innerHTML=list(lessons);$('todayExtras').innerHTML=extras.length?extras.map(x=>`<div class="muted" style="margin-top:18px">${safe(new Date(x.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}</div>${card(x,x.date===date)}`).join(''):'<div class="empty">Nessun impegno in programma.</div>';$('weekList').innerHTML=renderWeekTable();const all=data.filter(x=>x.type==='event');
+function renderCurrentActivity(now,lessons){
+ const el=$('currentActivity');if(!el)return;
+ const date=localDate(),minutes=now.getHours()*60+now.getMinutes();
+ const toMinutes=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m};
+ const events=data.filter(x=>x.type==='event'&&x.date===date);
+ const activities=[...lessons,...events].filter(x=>x.start&&x.end).sort((a,b)=>xTime(a)-xTime(b));
+ function xTime(x){return toMinutes(x.start)}
+ const ongoing=activities.filter(x=>toMinutes(x.start)<=minutes&&minutes<toMinutes(x.end));
+ const next=activities.find(x=>toMinutes(x.start)>minutes);
+ const meta=x=>[x.classroom,x.room].filter(Boolean).map(safe).join(' · ');
+ const label=x=>x.type==='lesson'?'Lezione':'Impegno';
+ const title=x=>safe(x.subject)+(x.classroom?' — '+safe(x.classroom):'');
+ let html='';
+ if(ongoing.length){
+  html+=ongoing.map(x=>{
+   const start=toMinutes(x.start),end=toMinutes(x.end),progress=Math.max(0,Math.min(100,Math.round((minutes-start)/(end-start)*100)));
+   return '<div class="activity-current"><div class="activity-kicker">◷ '+label(x)+' in corso</div><div class="activity-flex"><div><strong>'+title(x)+'</strong>'+(x.room?'<div class="activity-meta">'+safe(x.room)+'</div>':'')+'</div><span class="activity-end">Fino alle '+safe(x.end)+'</span></div><div class="activity-progress"><div style="width:'+progress+'%"></div></div><div class="activity-meta">'+(end-minutes)+' minuti rimanenti</div></div>'
+  }).join('');
+ }else html='<div class="activity-idle">Nessuna attività in corso</div>';
+ if(next)html+='<div class="activity-next"><div class="activity-kicker">Prossima attività</div><div class="activity-flex"><strong>'+title(next)+'</strong><strong>'+safe(next.start)+'</strong></div><div class="activity-meta">'+label(next)+(next.room?' · '+safe(next.room):'')+'</div></div>';
+ else html+='<div class="activity-next activity-meta">Nessun’altra attività prevista per oggi.</div>';
+ el.innerHTML=html;
+}
+function render(){const now=new Date(),dow=now.getDay(),date=localDate();$('todayDate').textContent=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});const lessons=data.filter(x=>x.type==='lesson'&&!closureFor(date)&&Number(x.day)===dow);const currentTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');const extras=data.filter(x=>x.type==='event'&&x.date&&(x.date>date||(x.date===date&&(x.end||x.start||'00:00')>=currentTime))).sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));$('lc').textContent=formatHours(lessons.reduce((total,x)=>total+lessonHours(x),0));$('ec').textContent=extras.length;renderCurrentActivity(now,lessons);$('todayLessons').innerHTML=closureFor(date)?'<div class="closure-banner">📅 '+safe(closureFor(date))+' — lezioni sospese</div>':list(lessons);$('todayExtras').innerHTML=extras.length?extras.map(x=>`<div class="muted" style="margin-top:18px">${safe(new Date(x.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}</div>${card(x,x.date===date)}`).join(''):'<div class="empty">Nessun impegno in programma.</div>';$('weekList').innerHTML=renderWeekTable();const all=data.filter(x=>x.type==='event');
 const eventIsUpcoming=x=>x.date>date||(x.date===date&&(x.end||x.start||'00:00')>=currentTime);
 const upcoming=all.filter(eventIsUpcoming).sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
 const history=all.filter(x=>!eventIsUpcoming(x)).sort((a,b)=>b.date.localeCompare(a.date)||b.start.localeCompare(a.start));
 const renderEventGroups=items=>{let previousDate='';return items.map(x=>{const label=x.date!==previousDate?'<div class="muted" style="margin-top:18px">'+safe(new Date(x.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))+'</div>':'';previousDate=x.date;return label+card(x)}).join('')};
-$('commitmentList').innerHTML=all.length?'<h3>In programma ('+upcoming.length+')</h3>'+(upcoming.length?renderEventGroups(upcoming):'<div class="empty">Nessun impegno futuro.</div>')+(history.length?'<h3 style="margin-top:28px">Impegni passati ('+history.length+')</h3>'+renderEventGroups(history):''):'<div class="empty">Nessun impegno inserito.</div>'};function renderWeekTable(){
+$('commitmentList').innerHTML=all.length?'<h3>In programma ('+upcoming.length+')</h3>'+(upcoming.length?renderEventGroups(upcoming):'<div class="empty">Nessun impegno futuro.</div>')+(history.length?'<h3 style="margin-top:28px">Impegni passati ('+history.length+')</h3>'+renderEventGroups(history):''):'<div class="empty">Nessun impegno inserito.</div>';renderMonth()};
+let monthShown=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+let monthDay=new Date().getDate();
+function shiftMonth(n){monthShown=new Date(monthShown.getFullYear(),monthShown.getMonth()+n,1);monthDay=1;renderMonth()}
+function selectMonthDay(n){monthDay=n;renderMonth()}
+
+const CLOSURES_KEY='agenda-ipia-closures-v1';
+function normalizeClosures(v){if(!Array.isArray(v))return [];return v.filter(x=>x&&typeof x.name==='string'&&x.name.trim()&&validDate(x.start)&&validDate(x.end)&&x.start<=x.end).slice(0,300).map(x=>({name:x.name.trim().slice(0,100),start:x.start,end:x.end}))}
+let closures=[];try{closures=normalizeClosures(JSON.parse(localStorage.getItem(CLOSURES_KEY)||'[]'))}catch(e){}
+function easterDate(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k+7)%7,m=Math.floor((a+11*h+22*l)/451),p=Math.floor((h+l-7*m+114)/31),day=(h+l-7*m+114)%31+1;return new Date(y,p-1,day)}
+function holidayFor(iso){const [y,m,d]=iso.split('-').map(Number);const fixed={'01-01':'Capodanno','01-06':'Epifania','04-25':'Festa della Liberazione','05-01':'Festa del Lavoro','06-02':'Festa della Repubblica','08-15':'Ferragosto','11-01':'Ognissanti','12-08':'Immacolata Concezione','12-25':'Natale','12-26':'Santo Stefano'};const fixedName=fixed[iso.slice(5)];if(fixedName)return fixedName;const easter=easterDate(y);const isoDate=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(iso===isoDate(easter))return 'Pasqua';easter.setDate(easter.getDate()+1);return iso===isoDate(easter)?'Lunedì dell’Angelo':null}
+function closureFor(iso){const manual=closures.find(x=>x.start<=iso&&x.end>=iso);return manual?manual.name:holidayFor(iso)}
+function saveClosures(){beforeAgendaChange();localStorage.setItem(CLOSURES_KEY,JSON.stringify(closures));render();renderClosures()}
+function addClosure(e){e.preventDefault();const name=$('closureName').value.trim(),start=$('closureStart').value,end=$('closureEnd').value;if(!name||!validDate(start)||!validDate(end)||end<start){alert('Controlla il motivo e le date.');return}closures.push({name:name.slice(0,100),start,end});closures.sort((a,b)=>a.start.localeCompare(b.start));saveClosures();$('closureForm').reset()}
+function deleteClosure(i){if(!confirm('Eliminare questa sospensione?'))return;closures.splice(i,1);saveClosures()}
+function renderClosures(){const el=$('closureList');if(!el)return;el.innerHTML=closures.length?closures.map((x,i)=>'<div class="closure-row"><span><strong>'+safe(x.name)+'</strong><small>'+safe(x.start)+(x.end!==x.start?' → '+safe(x.end):'')+'</small></span><button type="button" class="danger small" onclick="deleteClosure('+i+')">Elimina</button></div>').join(''):'<p class="hint">Nessuna sospensione personalizzata.</p>'}
+
+function entriesForMonthDay(n){
+ const d=new Date(monthShown.getFullYear(),monthShown.getMonth(),n);
+ const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(n).padStart(2,'0');
+ return data.filter(x=>(x.type==='lesson'&&!closureFor(iso)&&Number(x.day)===d.getDay())||(x.type==='event'&&x.date===iso)).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+}
+function renderMonth(){
+ const grid=$('monthGrid');if(!grid)return;
+ const y=monthShown.getFullYear(),m=monthShown.getMonth(),length=new Date(y,m+1,0).getDate(),offset=(new Date(y,m,1).getDay()+6)%7;
+ const today=new Date();
+ $('monthTitle').textContent=monthShown.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+ let html=['L','M','M','G','V','S','D'].map(x=>'<div class="month-weekday">'+x+'</div>').join('');
+ for(let i=0;i<offset;i++)html+='<div class="month-empty"></div>';
+ for(let n=1;n<=length;n++){
+  const entries=entriesForMonthDay(n),lesson=entries.some(x=>x.type==='lesson'),event=entries.some(x=>x.type==='event');
+  const closed=closureFor(y+'-'+String(m+1).padStart(2,'0')+'-'+String(n).padStart(2,'0'));const isToday=y===today.getFullYear()&&m===today.getMonth()&&n===today.getDate();
+  html+='<button type="button" class="month-day'+(n===monthDay?' selected':'')+(isToday?' is-today':'')+(closed?' is-closed':'')+'" onclick="selectMonthDay('+n+')" aria-label="Giorno '+n+'"><span>'+n+'</span><span class="month-dots">'+(closed?'<span class="closed-mark" aria-label="Sospensione">×</span>':lesson?'<i class="lesson-dot"></i>':'')+(event?'<i class="event-dot" style="background:'+config.eventStyle.background+'"></i>':'')+'</span></button>';
+ }
+ grid.innerHTML=html;
+ const d=new Date(y,m,monthDay);
+ $('monthDayTitle').textContent=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+ const entries=entriesForMonthDay(monthDay);
+ const closed=closureFor(y+'-'+String(m+1).padStart(2,'0')+'-'+String(monthDay).padStart(2,'0'));$('monthEntries').innerHTML=(closed?'<div class="closure-banner">📅 '+safe(closed)+' — lezioni sospese</div>':'')+(entries.length?entries.map(x=>card(x)).join(''):'<div class="empty">Nessuna attività prevista per questo giorno.</div>');
+}
+function renderWeekTable(){
  const lessons=data.filter(x=>x.type==='lesson');
  if(!lessons.length)return '<div class="empty">Nessuna lezione settimanale inserita.</div>';
  const weekdays=lessons.some(x=>Number(x.day)===6)?[1,2,3,4,5,6]:[1,2,3,4,5];
@@ -94,9 +157,20 @@ $('commitmentList').innerHTML=all.length?'<h3>In programma ('+upcoming.length+')
 }
 function xEnd(x){return x.end||''}
 $('weekList').addEventListener('click',e=>{const b=e.target.closest('[data-entry-id]');if(b)editEntry(b.dataset.entryId)});
-function toggleFields(){const lesson=$('type').value==='lesson';$('weeklyFields').style.display=lesson?'block':'none';$('dateFields').style.display=lesson?'none':'block';$('date').required=!lesson;$('subjectLabel').textContent=lesson?'Materia':'Impegno';$('subjectLabel').htmlFor=lesson?'lessonSubject':'subject';$('lessonSubject').style.display=lesson?'block':'none';$('customLessonSubject').style.display=lesson&&$('lessonSubject').value==='__custom__'?'block':'none';$('customLessonSubject').required=lesson&&$('lessonSubject').value==='__custom__';$('customLessonClass').style.display=lesson&&$('lessonClass').value==='__custom__'?'block':'none';$('customLessonClass').required=lesson&&$('lessonClass').value==='__custom__';$('subject').style.display=lesson?'none':'block';$('subject').required=!lesson;$('customCommitment').required=!lesson&&$('subject').value==='__custom__';$('lessonClass').style.display=lesson?'block':'none';$('classroom').style.display=lesson?'none':'block';refreshTimes()};function openForm(id){editing=null;$('entryForm').reset();populateChoices();setRoom('');setEventClass('');setCommitment('');$('customLessonSubject').value='';$('customLessonClass').value='';$('presetNote').value='';setTime('start','08:20');setTime('end','09:20');$('date').value=localDate();$('day').value=String(new Date().getDay()||1);$('formHeading').textContent='Nuova voce';toggleFields();navigate('editor')};function setSelectChoice(id,value){const el=$(id);if(value&&!Array.from(el.options).some(o=>o.value===value))el.add(new Option(value+' (già usato)',value));if(value)el.value=value}function editEntry(id){const x=data.find(x=>x.id===id);if(!x)return;editing=id;for(const k of ['type','day','date','classroom','note'])$(k).value=x[k]||'';populateChoices();setEventClass(x.classroom||'');setRoom(x.room||'');setLessonChoice('lessonClass','customLessonClass',x.type==='lesson'?x.classroom:'');setCommitment(x.type==='event'?x.subject||'':'');setLessonChoice('lessonSubject','customLessonSubject',x.type==='lesson'?x.subject:'');$('presetNote').value=config.notes.includes(x.note)?x.note:'';$('formHeading').textContent='Modifica voce';toggleFields();setTime('start',x.start);setTime('end',x.end);navigate('editor')};function duplicateEntry(id){const x=data.find(entry=>entry.id===id);if(!x)return;editEntry(id);editing=null;$('formHeading').textContent=x.type==='lesson'?'Duplica lezione':'Duplica impegno';};$('entryForm').addEventListener('submit',e=>{e.preventDefault();const x={id:editing||String(Date.now())+Math.random().toString(36).slice(2),type:$('type').value,day:$('day').value,date:$('date').value,start:$('start').value,end:$('end').value,subject:$('type').value==='lesson'?($('lessonSubject').value==='__custom__' ? $('customLessonSubject').value : $('lessonSubject').value).trim():($('subject').value==='__custom__' ? $('customCommitment').value : $('subject').value).trim(),classroom:$('type').value==='lesson'?($('lessonClass').value==='__custom__' ? $('customLessonClass').value : $('lessonClass').value).trim():($('classroom').value==='__custom__' ? $('customClass').value : $('classroom').value).trim(),room:($('room').value==='__custom__' ? $('customRoom').value : $('room').value).trim(),note:$('note').value.trim(),reminder:''};if(x.type==='lesson'){if(!config.subjects.length||!config.classes.length){alert('Per inserire una lezione configura prima materie e classi nelle Impostazioni.');navigate('settings');$('setupMessage').hidden=false;return}if(!x.classroom){alert('Seleziona una classe.');return}const valid=['08:20','09:20','10:20','11:20','12:20','13:20'];if(!valid.includes(x.start)){alert('Seleziona un orario di inizio valido.');return}}if(x.end<=x.start){alert('L’orario di fine deve essere successivo a quello di inizio.');return}if(!x.subject){alert('Inserisci materia o impegno.');return}const additions=[];if(x.type==='lesson'&&$('lessonSubject').value==='__custom__')additions.push(['subjects',x.subject]);if(x.type==='lesson'&&$('lessonClass').value==='__custom__')additions.push(['classes',x.classroom]);if(x.type==='event'&&$('subject').value==='__custom__')additions.push(['commitments',x.subject]);if(x.type==='event'&&$('classroom').value==='__custom__')additions.push(['classes',x.classroom]);if($('room').value==='__custom__')additions.push(['rooms',x.room]);let configChanged=false;for(const [group,value] of additions){if(!value||config[group].some(item=>(typeof item==='string'?item:item.name).toLocaleLowerCase('it')===value.toLocaleLowerCase('it')))continue;if(config[group].length>=80)continue;if(group==='classes'||group==='subjects')config[group].push({name:value,color:group==='subjects'?'#eaf2fc':'#dcebff'});else config[group].push(value);configChanged=true}if(configChanged)saveConfig();if(editing)data=data.map(y=>y.id===editing?x:y);else data.push(x);save();navigate(x.type==='lesson'?'week':'commitments')});function removeEntry(id){if(confirm('Eliminare questa voce?')){data=data.filter(x=>x.id!==id);save()}}function clearData(){if(confirm('Vuoi cancellare definitivamente tutti i dati?')){data=[];save();navigate('today')}}function exportConfig(){const b=new Blob([JSON.stringify(config,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='agenda-ipia-personalizzazioni.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function importConfig(e){const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);if(!obj||typeof obj!=='object'||!Array.isArray(obj.subjects)||!Array.isArray(obj.classes))throw Error();if(confirm('Sostituire gli elenchi personalizzati? Le lezioni resteranno salvate.')){config=normalizeConfig(obj);saveConfig()}}catch(err){alert('File personalizzazioni non valido.')}};r.readAsText(f);e.target.value=''}function exportData(){
+function toggleFields(){const lesson=$('type').value==='lesson';$('weeklyFields').style.display=lesson?'block':'none';$('dateFields').style.display=lesson?'none':'block';$('date').required=!lesson;$('subjectLabel').textContent=lesson?'Materia':'Impegno';$('subjectLabel').htmlFor=lesson?'lessonSubject':'subject';$('lessonSubject').style.display=lesson?'block':'none';$('customLessonSubject').style.display=lesson&&$('lessonSubject').value==='__custom__'?'block':'none';$('customLessonSubject').required=lesson&&$('lessonSubject').value==='__custom__';$('customLessonClass').style.display=lesson&&$('lessonClass').value==='__custom__'?'block':'none';$('customLessonClass').required=lesson&&$('lessonClass').value==='__custom__';$('subject').style.display=lesson?'none':'block';$('subject').required=!lesson;$('customCommitment').required=!lesson&&$('subject').value==='__custom__';$('lessonClass').style.display=lesson?'block':'none';$('classroom').style.display=lesson?'none':'block';refreshTimes()};function openForm(id){editing=null;$('entryForm').reset();populateChoices();setRoom('');setEventClass('');setCommitment('');$('customLessonSubject').value='';$('customLessonClass').value='';$('presetNote').value='';setTime('start','08:20');setTime('end','09:20');$('date').value=localDate();$('day').value=String(new Date().getDay()||1);$('formHeading').textContent='Nuova voce';toggleFields();navigate('editor')};function setSelectChoice(id,value){const el=$(id);if(value&&!Array.from(el.options).some(o=>o.value===value))el.add(new Option(value+' (già usato)',value));if(value)el.value=value}function editEntry(id){const x=data.find(x=>x.id===id);if(!x)return;editing=id;for(const k of ['type','day','date','classroom','note'])$(k).value=x[k]||'';populateChoices();setEventClass(x.classroom||'');setRoom(x.room||'');setLessonChoice('lessonClass','customLessonClass',x.type==='lesson'?x.classroom:'');setCommitment(x.type==='event'?x.subject||'':'');setLessonChoice('lessonSubject','customLessonSubject',x.type==='lesson'?x.subject:'');$('presetNote').value=config.notes.includes(x.note)?x.note:'';$('formHeading').textContent='Modifica voce';toggleFields();setTime('start',x.start);setTime('end',x.end);navigate('editor')};function conflictsFor(x){
+ const overlaps=y=>x.start<y.end&&y.start<x.end;
+ return data.filter(y=>y.id!==x.id&&overlaps(y)&&(
+  x.type==='event'?(y.type==='event'&&y.date===x.date||y.type==='lesson'&&!closureFor(x.date)&&Number(y.day)===new Date(x.date+'T12:00:00').getDay()):
+  (y.type==='lesson'&&String(y.day)===String(x.day))
+ ));
+}
+function conflictMessage(x,conflicts){
+ const label=x.type==='event'?'impegno':'lezione';
+ return 'Attenzione: '+label+' sovrapposto a '+conflicts.length+' attività già presenti:\n\n'+conflicts.map(y=>'• '+y.subject+(y.classroom?' ('+y.classroom+')':'')+' — '+y.start+'–'+y.end).join('\n')+'\n\nVuoi salvare comunque?';
+}
+function duplicateEntry(id){const x=data.find(entry=>entry.id===id);if(!x)return;editEntry(id);editing=null;$('formHeading').textContent=x.type==='lesson'?'Duplica lezione':'Duplica impegno';};$('entryForm').addEventListener('submit',e=>{e.preventDefault();const x={id:editing||String(Date.now())+Math.random().toString(36).slice(2),type:$('type').value,day:$('day').value,date:$('date').value,start:$('start').value,end:$('end').value,subject:$('type').value==='lesson'?($('lessonSubject').value==='__custom__' ? $('customLessonSubject').value : $('lessonSubject').value).trim():($('subject').value==='__custom__' ? $('customCommitment').value : $('subject').value).trim(),classroom:$('type').value==='lesson'?($('lessonClass').value==='__custom__' ? $('customLessonClass').value : $('lessonClass').value).trim():($('classroom').value==='__custom__' ? $('customClass').value : $('classroom').value).trim(),room:($('room').value==='__custom__' ? $('customRoom').value : $('room').value).trim(),note:$('note').value.trim(),reminder:''};if(x.type==='lesson'){if(!config.subjects.length||!config.classes.length){alert('Per inserire una lezione configura prima materie e classi nelle Impostazioni.');navigate('settings');$('setupMessage').hidden=false;return}if(!x.classroom){alert('Seleziona una classe.');return}const valid=['08:20','09:20','10:20','11:20','12:20','13:20'];if(!valid.includes(x.start)){alert('Seleziona un orario di inizio valido.');return}}if(x.end<=x.start){alert('L’orario di fine deve essere successivo a quello di inizio.');return}if(!x.subject){alert('Inserisci materia o impegno.');return}const additions=[];if(x.type==='lesson'&&$('lessonSubject').value==='__custom__')additions.push(['subjects',x.subject]);if(x.type==='lesson'&&$('lessonClass').value==='__custom__')additions.push(['classes',x.classroom]);if(x.type==='event'&&$('subject').value==='__custom__')additions.push(['commitments',x.subject]);if(x.type==='event'&&$('classroom').value==='__custom__')additions.push(['classes',x.classroom]);if($('room').value==='__custom__')additions.push(['rooms',x.room]);let configChanged=false;for(const [group,value] of additions){if(!value||config[group].some(item=>(typeof item==='string'?item:item.name).toLocaleLowerCase('it')===value.toLocaleLowerCase('it')))continue;if(config[group].length>=80)continue;if(group==='classes'||group==='subjects')config[group].push({name:value,color:group==='subjects'?'#eaf2fc':'#dcebff'});else config[group].push(value);configChanged=true}const conflicts=conflictsFor(x);if(conflicts.length&&!confirm(conflictMessage(x,conflicts)))return;if(configChanged)saveConfig();if(editing)data=data.map(y=>y.id===editing?x:y);else data.push(x);save();navigate(x.type==='lesson'?'week':'commitments')});function removeEntry(id){if(confirm('Eliminare questa voce?')){data=data.filter(x=>x.id!==id);save()}}function clearData(){if(confirm('Vuoi cancellare definitivamente tutti i dati?')){data=[];save();navigate('today')}}function exportConfig(){const b=new Blob([JSON.stringify(config,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='agenda-ipia-personalizzazioni.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function importConfig(e){const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);if(!obj||typeof obj!=='object'||!Array.isArray(obj.subjects)||!Array.isArray(obj.classes))throw Error();if(confirm('Sostituire gli elenchi personalizzati? Le lezioni resteranno salvate.')){config=normalizeConfig(obj);saveConfig()}}catch(err){alert('File personalizzazioni non valido.')}};r.readAsText(f);e.target.value=''}function exportData(){
   try{
-    const backup={format:'agenda-ipia-backup',schema:1,exportedAt:new Date().toISOString(),appVersion:APP_VERSION,entries:data,personalization:config};
+    const backup={format:'agenda-ipia-backup',schema:1,exportedAt:new Date().toISOString(),appVersion:APP_VERSION,entries:data,personalization:config,closures};
     const b=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(b),a=document.createElement('a');
     a.href=url;a.download='agenda-ipia-backup-'+localDate()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   }catch(err){alert('Impossibile esportare il backup: '+err.message)}
@@ -110,24 +184,67 @@ function importData(e){
  if(f.size>5*1024*1024){alert('Il file supera 5 MB.');return}
  const r=new FileReader();r.onerror=()=>alert('Impossibile leggere il file.');r.onload=()=>{
   try{
-   const obj=JSON.parse(r.result);let entries,newConfig;
+   const obj=JSON.parse(r.result);let entries,newConfig,newClosures=null;
    if(Array.isArray(obj)){// Compatibilità con le copie delle versioni precedenti
     entries=obj;newConfig=null;
-   }else if(obj&&obj.format==='agenda-ipia-backup'&&obj.schema===1){entries=obj.entries;newConfig=obj.personalization;if(!validPersonalization(newConfig))throw Error('Personalizzazioni non valide')}
+   }else if(obj&&obj.format==='agenda-ipia-backup'&&obj.schema===1){entries=obj.entries;newConfig=obj.personalization;if(obj.closures!==undefined){if(!Array.isArray(obj.closures)||obj.closures.length>300||normalizeClosures(obj.closures).length!==obj.closures.length)throw Error('Sospensioni non valide');newClosures=normalizeClosures(obj.closures)}if(!validPersonalization(newConfig))throw Error('Personalizzazioni non valide')}
    else throw Error('Formato sconosciuto');
    if(!validEntries(entries))throw Error('Lezioni o impegni non validi');
    const msg=newConfig?'Ripristinare questo backup completo? Lezioni, impegni e personalizzazioni attuali saranno SOSTITUITI. Questa operazione non può essere annullata.':'Ripristinare questo vecchio backup? Lezioni e impegni attuali saranno SOSTITUITI. Le personalizzazioni correnti resteranno invariate.';
    if(!confirm(msg))return;
    // Conserva gli stessi identificatori localStorage delle versioni precedenti.
-   const oldEntries=localStorage.getItem(KEY),oldConfig=localStorage.getItem(CONFIG_KEY);
-   try{localStorage.setItem(KEY,JSON.stringify(entries));if(newConfig)localStorage.setItem(CONFIG_KEY,JSON.stringify(normalizeConfig(newConfig)))}
-   catch(writeError){if(oldEntries===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,oldEntries);if(oldConfig===null)localStorage.removeItem(CONFIG_KEY);else localStorage.setItem(CONFIG_KEY,oldConfig);throw writeError}
-   data=entries;if(newConfig)config=normalizeConfig(newConfig);
-   populateChoices();renderSettings();render();navigate('today');alert('Backup ripristinato correttamente.');
+   const oldEntries=localStorage.getItem(KEY),oldConfig=localStorage.getItem(CONFIG_KEY),oldClosures=localStorage.getItem(CLOSURES_KEY);
+   try{localStorage.setItem(SAFETY_BACKUP_KEY,JSON.stringify(backupSnapshot()));localStorage.setItem(KEY,JSON.stringify(entries));if(newConfig)localStorage.setItem(CONFIG_KEY,JSON.stringify(normalizeConfig(newConfig)));localStorage.setItem(CLOSURES_KEY,JSON.stringify(newClosures||[]))}
+   catch(writeError){if(oldEntries===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,oldEntries);if(oldConfig===null)localStorage.removeItem(CONFIG_KEY);else localStorage.setItem(CONFIG_KEY,oldConfig);if(oldClosures===null)localStorage.removeItem(CLOSURES_KEY);else localStorage.setItem(CLOSURES_KEY,oldClosures);throw writeError}
+   data=entries;if(newConfig)config=normalizeConfig(newConfig);closures=newClosures||[];
+   populateChoices();renderSettings();renderClosures();render();navigate('today');alert('Backup ripristinato correttamente.');
   }catch(err){alert('Backup non valido o impossibile da ripristinare: '+err.message)}
  };r.readAsText(f);
 }
-const APP_VERSION='4.9.11';
+
+const AUTO_BACKUP_KEY='agenda-ipia-auto-backups-v1';
+const SAFETY_BACKUP_KEY='agenda-ipia-pre-restore-v1';
+function backupSnapshot(){
+ return {format:'agenda-ipia-backup',schema:1,exportedAt:new Date().toISOString(),appVersion:APP_VERSION,entries:JSON.parse(JSON.stringify(data)),personalization:JSON.parse(JSON.stringify(config)),closures:JSON.parse(JSON.stringify(closures))};
+}
+function persistedBackupSnapshot(){const x=backupSnapshot();try{x.entries=JSON.parse(localStorage.getItem(KEY)||'[]');x.personalization=JSON.parse(localStorage.getItem(CONFIG_KEY)||'null')||x.personalization;x.closures=JSON.parse(localStorage.getItem(CLOSURES_KEY)||'[]')}catch(e){}return x}
+function readAutoBackups(){try{const list=JSON.parse(localStorage.getItem(AUTO_BACKUP_KEY)||'[]');return Array.isArray(list)?list.filter(x=>x&&x.snapshot&&typeof x.day==='string').slice(0,7):[]}catch(e){return []}}
+function beforeAgendaChange(){
+ try{
+  const day=localDate(),list=readAutoBackups();
+  if(list.some(x=>x.day===day))return;
+  list.unshift({day,snapshot:persistedBackupSnapshot()});
+  localStorage.setItem(AUTO_BACKUP_KEY,JSON.stringify(list.slice(0,7)));
+  renderBackupList();
+ }catch(e){console.warn('Backup automatico non disponibile:',e);const el=$('backupStatus');if(el)el.textContent='Attenzione: impossibile creare la copia locale. Esporta un backup JSON.'}
+}
+function renderBackupList(){
+ const el=$('backupList');if(!el)return;
+ const list=readAutoBackups(),safety=localStorage.getItem(SAFETY_BACKUP_KEY);
+ el.innerHTML=(safety?'<div class="closure-row"><span><strong>Copia prima dell’ultimo ripristino</strong><small>Ripristino di sicurezza</small></span><button type="button" onclick="restoreLocalBackup(-1)">Ripristina</button></div>':'')+
+ list.map((x,i)=>'<div class="closure-row"><span><strong>'+safe(x.day)+'</strong><small>Copia automatica prima delle modifiche</small></span><button type="button" onclick="restoreLocalBackup('+i+')">Ripristina</button></div>').join('')+
+ (!list.length&&!safety?'<p class="hint">Nessuna copia ancora disponibile. La prima verrà creata quando modifichi i dati.</p>':'');
+ const status=$('backupStatus');if(status&&!status.textContent.startsWith('Attenzione'))status.textContent=list.length+' copie automatiche conservate (massimo 7).';
+}
+function restoreLocalBackup(index){
+ try{
+  const snapshot=index===-1?JSON.parse(localStorage.getItem(SAFETY_BACKUP_KEY)||'null'):readAutoBackups()[index]?.snapshot;
+  if(!snapshot||snapshot.format!=='agenda-ipia-backup'||snapshot.schema!==1||!validEntries(snapshot.entries)||!validPersonalization(snapshot.personalization)||!Array.isArray(snapshot.closures)||normalizeClosures(snapshot.closures).length!==snapshot.closures.length)throw Error('Copia non valida');
+  if(!confirm('Ripristinare questa copia? I dati attuali verranno sostituiti. Verrà prima creata una copia di sicurezza.'))return;
+  const current=backupSnapshot(),old=[localStorage.getItem(KEY),localStorage.getItem(CONFIG_KEY),localStorage.getItem(CLOSURES_KEY)];
+  // La copia di sicurezza va salvata prima di modificare qualsiasi dato.
+  localStorage.setItem(SAFETY_BACKUP_KEY,JSON.stringify(current));
+  try{
+   localStorage.setItem(KEY,JSON.stringify(snapshot.entries));
+   localStorage.setItem(CONFIG_KEY,JSON.stringify(normalizeConfig(snapshot.personalization)));
+   localStorage.setItem(CLOSURES_KEY,JSON.stringify(normalizeClosures(snapshot.closures)));
+  }catch(e){[KEY,CONFIG_KEY,CLOSURES_KEY].forEach((k,i)=>old[i]===null?localStorage.removeItem(k):localStorage.setItem(k,old[i]));throw e}
+  data=snapshot.entries;config=normalizeConfig(snapshot.personalization);closures=normalizeClosures(snapshot.closures);
+  populateChoices();renderSettings();renderClosures();render();renderBackupList();alert('Copia locale ripristinata.');
+ }catch(e){alert('Impossibile ripristinare la copia: '+e.message)}
+}
+
+const APP_VERSION='4.9.17';
 let latestAppVersion=null;const versionLabel=$('appVersionLabel');if(versionLabel)versionLabel.textContent=APP_VERSION;
 function versionParts(v){return String(v).split('.').map(x=>Number(x)||0)}
 function newerVersion(a,b){const aa=versionParts(a),bb=versionParts(b);for(let i=0;i<Math.max(aa.length,bb.length);i++){if((aa[i]||0)!==(bb[i]||0))return (aa[i]||0)>(bb[i]||0)}return false}
@@ -154,9 +271,11 @@ async function applyAppUpdate(){
   location.replace('./?updated='+encodeURIComponent(latestAppVersion)+'&t='+Date.now());
  }catch(e){button.disabled=false;button.textContent='Aggiorna';alert('Riprova quando sei online.')}
 }
-populateChoices();setupTimes();render();if(!data.length&&!config.subjects.length&&!config.classes.length)navigate('settings');if ('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+populateChoices();setupTimes();render();renderClosures();if(!data.length&&!config.subjects.length&&!config.classes.length)navigate('settings');if ('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 window.addEventListener('load',()=>{checkAppVersion();setInterval(checkAppVersion,15*60*1000)});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkAppVersion()});
 window.addEventListener('online',checkAppVersion);
+setInterval(()=>{if(!document.hidden&&document.querySelector('#today.view.active'))renderCurrentActivity(new Date(),data.filter(x=>x.type==='lesson'&&!closureFor(localDate())&&Number(x.day)===new Date().getDay()))},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
 // Esponi esplicitamente l'azione al pulsante HTML anche in Safari.
 window.openForm=openForm;
