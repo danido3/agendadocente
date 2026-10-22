@@ -167,3 +167,20 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline-color:#8aa
 /* 4.9.33: titoli e contatori impegni come nella pagina Oggi */
 #commitments .today-section-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #commitments .today-section-count{display:inline-flex;align-items:center;justify-content:center;font:inherit;color:inherit;font-weight:inherit;line-height:1}
+
+/* TEST 4.9.34: pulsanti account Google */
+#firebaseLogin[hidden],#firebaseLogout[hidden]{display:none!important}
+#firebaseAuthStatus{overflow-wrap:anywhere}
+
+/* TEST 4.9.35: cloud action visibility */
+#cloudUpload[hidden],#cloudDownload[hidden]{display:none!important}
+#cloudStatus{overflow-wrap:anywhere}
+
+/* TEST 4.9.36 */
+#autoSyncToggle[hidden]{display:none!important}
+#autoSyncStatus{overflow-wrap:anywhere}
+
+/* TEST 4.9.37 */
+#resolveCloudConflicts[hidden]{display:none!important}
+#cloudConflictPanel pre{font-size:12px;max-height:220px;overflow:auto}
+#cloudConflictPanel .setting-group{margin:10px 0;padding:12px;border:1px solid #dce4d7;border-radius:12px}
