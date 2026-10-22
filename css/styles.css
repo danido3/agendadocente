@@ -131,3 +131,20 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline-color:#8aa
 .activity-meta{font-size:12px;color:#607566;margin-top:7px}
 .activity-progress{height:7px;background:#c6d9c2;border-radius:10px;overflow:hidden;margin-top:13px}
 .activity-progress>div{height:100%;background:#52785a;border-radius:10px}
+
+/* 4.9.22: andamento temporale nella scheda dell'attività in corso */
+.inline-activity{margin-top:10px;font-size:12px;font-weight:700;color:#2e7450}.inline-progress{height:6px;border-radius:999px;background:#dce9df;overflow:hidden;margin-top:6px}.inline-progress>div{height:100%;background:#3b9569;border-radius:999px;transition:width .4s ease}
+
+/* 4.9.24: pallini della legenda mese coerenti con il calendario */
+.month-legend{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.month-legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.month-legend i.lesson-dot,.month-legend i.event-dot{display:inline-block;width:9px;height:9px;min-width:9px;min-height:9px;border-radius:50%;flex:none}
+
+/* 4.9.25: contatori integrati nelle intestazioni di Oggi */
+#today .today-section-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#today .today-section-count{display:inline-flex;align-items:center;justify-content:center;font:inherit;color:inherit;font-weight:inherit;line-height:1;min-width:1ch}
+
+/* 4.9.28: evidenzia tutta la colonna del giorno corrente in ambra */
+.week-table th.week-today-top,.week-table td.week-today-cell{box-shadow:inset 2px 0 #d2a04f,inset -2px 0 #d2a04f}
+.week-table th.week-today-top{border-top:2px solid #d2a04f;border-radius:9px 9px 0 0;box-shadow:inset 2px 0 #d2a04f,inset -2px 0 #d2a04f,inset 0 -4px 0 #729777}
+.week-table td.week-today-bottom{border-bottom:2px solid #d2a04f;border-radius:0 0 9px 9px}
