@@ -13,7 +13,20 @@ function populateChoices(){const refill=(id,items)=>{const el=$(id),old=el.value
 function toggleCustomLessonSubject(){const custom=$('lessonSubject').value==='__custom__';$('customLessonSubject').style.display=custom?'block':'none';$('customLessonSubject').required=custom&&$('type').value==='lesson';if(!custom)$('customLessonSubject').value=''}function toggleCustomLessonClass(){const custom=$('lessonClass').value==='__custom__';$('customLessonClass').style.display=custom?'block':'none';$('customLessonClass').required=custom&&$('type').value==='lesson';if(!custom)$('customLessonClass').value=''}function setLessonChoice(id,customId,value){const el=$(id);if(!value){el.value=el.options[0]?.value||'';$(customId).value=''}else if(Array.from(el.options).some(o=>o.value===value)){el.value=value;$(customId).value=''}else{el.value='__custom__';$(customId).value=value}if(id==='lessonSubject')toggleCustomLessonSubject();else toggleCustomLessonClass()}function toggleCustomCommitment(){const custom=$('subject').value==='__custom__';$('customCommitment').required=custom&&$('type').value==='event';$('customCommitment').style.display=custom?'block':'none';if(!custom)$('customCommitment').value=''}function setCommitment(value){const el=$('subject');if(!value){el.value='';$('customCommitment').value=''}else if(Array.from(el.options).some(o=>o.value===value)){el.value=value;$('customCommitment').value=''}else{el.value='__custom__';$('customCommitment').value=value}toggleCustomCommitment()}function toggleCustomClass(){const custom=$('classroom').value==='__custom__';$('customClass').style.display=custom?'block':'none';if(!custom)$('customClass').value=''}function setEventClass(value){const el=$('classroom');if(!value){el.value='';$('customClass').value=''}else if(Array.from(el.options).some(o=>o.value===value)){el.value=value;$('customClass').value=''}else{el.value='__custom__';$('customClass').value=value}toggleCustomClass()}function toggleCustomRoom(){const custom=$('room').value==='__custom__';$('customRoom').style.display=custom?'block':'none';if(!custom)$('customRoom').value=''}function setRoom(value){const room=$('room');if(!value){room.value='';$('customRoom').value=''}else if(Array.from(room.options).some(o=>o.value===value)){room.value=value;$('customRoom').value=''}else{room.value='__custom__';$('customRoom').value=value}toggleCustomRoom()}function choosePresetNote(){if($('presetNote').value)$('note').value=$('presetNote').value}
 const PRESET_COLORS={subjects:[['Salvia','#DCEBDD'],['Azzurro','#DCEAF8'],['Sabbia','#F5E8CC'],['Lavanda','#E9E0F5'],['Menta','#D6EEE8'],['Pesca','#F5DDD0']],classes:[['Corallo','#F3D2CA'],['Blu','#D6E4F7'],['Viola','#E7D7F4'],['Verde','#D9E8D4'],['Ocra','#F6E5BD'],['Rosa','#F4DCE6']]};
 function presetColorMarkup(group,index,currentColor){return '<div class="preset-colors" role="group" aria-label="Colori predefiniti">'+PRESET_COLORS[group].map(([name,color])=>'<button type="button" class="preset-swatch'+(currentColor.toLowerCase()===color.toLowerCase()?' selected':'')+'" data-preset-group="'+group+'" data-preset-index="'+index+'" data-preset-color="'+color+'" title="'+name+'" aria-label="'+name+' '+color+'" aria-pressed="'+(currentColor.toLowerCase()===color.toLowerCase())+'" style="--swatch:'+color+'">'+(currentColor.toLowerCase()===color.toLowerCase()?'✓':'')+'</button>').join('')+'</div>'}
-function renderSettings(){const labels={subjects:'Materie',commitments:'Tipi di impegno',classes:'Classi',rooms:'Aule e laboratori',notes:'Note predefinite'};let html='';for(const group of ['subjects','commitments','classes','rooms','notes']){html+='<div class="setting-group"><h3>'+labels[group]+'</h3>';if(!config[group].length)html+='<p class="setting-empty">Nessuna voce inserita. Scrivi qui sotto per aggiungerne una.</p>';config[group].forEach((item,i)=>{const obj=group==='subjects'||group==='classes';const value=obj?item.name:item;html+='<div class="setting-line"><input type="text" aria-label="'+labels[group]+' '+(i+1)+'" maxlength="100" value="'+safe(value)+'" data-setting="'+group+'" data-index="'+i+'" data-field="name">'+(obj?'<input type="color" aria-label="Colore '+safe(value)+'" value="'+item.color+'" data-setting="'+group+'" data-index="'+i+'" data-field="color">':'')+'<button type="button" class="danger small" data-delete="'+group+'" data-index="'+i+'" aria-label="Elimina '+safe(value)+'">×</button></div>'+(obj?presetColorMarkup(group,i,item.color):'')});html+='<div class="setting-add"><input type="text" maxlength="100" id="new-'+group+'" placeholder="Aggiungi '+labels[group].toLowerCase()+'"><button type="button" data-add="'+group+'">＋</button></div></div>'}$('personalization').innerHTML=html;const prompt=$('setupMessage');if(prompt)prompt.hidden=!!(config.subjects.length&&config.classes.length)}
+let activeSettingsCategory='subjects';
+function chooseSettingsCategory(group){
+ if(!['subjects','classes','rooms','commitments','notes'].includes(group))return;
+ activeSettingsCategory=group;
+ const tabs=document.getElementById('personalizationTabs');
+ if(tabs)tabs.querySelectorAll('[data-settings-category]').forEach(button=>{const active=button.dataset.settingsCategory===group;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
+ const container=document.getElementById('personalization');
+ if(container)container.querySelectorAll('[data-settings-group]').forEach(section=>{section.hidden=section.dataset.settingsGroup!==group});
+}
+document.getElementById('personalizationTabs').addEventListener('click',event=>{
+ const button=event.target.closest('button[data-settings-category]');
+ if(button)chooseSettingsCategory(button.dataset.settingsCategory);
+});
+function renderSettings(){const labels={subjects:'Materie',commitments:'Tipi di impegno',classes:'Classi',rooms:'Aule e laboratori',notes:'Note predefinite'};let html='';for(const group of ['subjects','commitments','classes','rooms','notes']){html+='<div class="setting-group settings-category-content" data-settings-group="'+group+'"><h3>'+labels[group]+'</h3>';if(!config[group].length)html+='<p class="setting-empty">Nessuna voce inserita. Scrivi qui sotto per aggiungerne una.</p>';config[group].forEach((item,i)=>{const obj=group==='subjects'||group==='classes';const value=obj?item.name:item;html+='<div class="setting-line"><input type="text" aria-label="'+labels[group]+' '+(i+1)+'" maxlength="100" value="'+safe(value)+'" data-setting="'+group+'" data-index="'+i+'" data-field="name">'+(obj?'<input type="color" aria-label="Colore '+safe(value)+'" value="'+item.color+'" data-setting="'+group+'" data-index="'+i+'" data-field="color">':'')+'<button type="button" class="danger small" data-delete="'+group+'" data-index="'+i+'" aria-label="Elimina '+safe(value)+'">×</button></div>'+(obj?presetColorMarkup(group,i,item.color):'')});html+='<div class="setting-add"><input type="text" maxlength="100" id="new-'+group+'" placeholder="Aggiungi '+labels[group].toLowerCase()+'"><button type="button" data-add="'+group+'">＋</button></div></div>'}$('personalization').innerHTML=html;chooseSettingsCategory(activeSettingsCategory);const prompt=$('setupMessage');if(prompt)prompt.hidden=!!(config.subjects.length&&config.classes.length)}
 function changeEventColor(field,value){if(!['background','todayBorder'].includes(field)||!/^#[0-9a-f]{6}$/i.test(value))return;config.eventStyle[field]=value;saveConfig()}
 function changeSetting(group,index,field,value){const arr=config[group];if(!arr||!arr[index])return;if(field==='color'){if(/^#[0-9a-f]{6}$/i.test(value))arr[index].color=value}else{value=value.trim();if(!value)return;const duplicate=arr.some((x,i)=>i!==index&&(typeof x==='string'?x:x.name).toLowerCase()===value.toLowerCase());if(duplicate){alert('Questa voce esiste già.');renderSettings();return}const previousName=typeof arr[index]==='string'?arr[index]:arr[index].name;if(previousName!==value&&['subjects','classes','rooms'].includes(group)){const fieldName=group==='subjects'?'subject':group==='classes'?'classroom':'room';const updated=data.map(entry=>(group==='rooms'||entry.type==='lesson')&&entry[fieldName]===previousName?{...entry,[fieldName]:value}:entry);if(updated.some((entry,i)=>entry!==data[i])){try{beforeAgendaChange();localStorage.setItem(KEY,JSON.stringify(updated))}catch(e){alert('Impossibile salvare le voci aggiornate. Riprova dopo aver liberato spazio.');renderSettings();return}data=updated}}if(typeof arr[index]==='string')arr[index]=value;else arr[index].name=value}saveConfig()}
 function addSetting(group){const input=$('new-'+group),value=input.value.trim();if(!value)return;if(config[group].some(x=>(typeof x==='string'?x:x.name).toLowerCase()===value.toLowerCase())){alert('Questa voce esiste già.');return}if(['subjects','classes'].includes(group))config[group].push({name:value,color:group==='subjects'?'#eaf2fc':'#dcebff'});else config[group].push(value);saveConfig()}
@@ -30,17 +43,17 @@ if(!localStorage.getItem(CONFIG_KEY)&&data.some(x=>x.type==='lesson')){
  config.classes=classes.map(name=>({name,color:previousClassColors[name]||'#dcebff'}));
  beforeAgendaChange();localStorage.setItem(CONFIG_KEY,JSON.stringify(config));
 }
-const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));function save(){beforeAgendaChange();localStorage.setItem(KEY,JSON.stringify(data));window.dispatchEvent(new Event('agenda-local-changed'));render()};function navigate(page){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===page));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('heading').textContent=({today:'Oggi',week:'Settimana',commitments:'Impegni',month:'Mese',settings:'Impostazioni',editor:'Modifica agenda'})[page];window.scrollTo(0,0);if(page==='settings'){renderSettings();renderBackupList();}if(page!=='editor')render()};function card(x,highlightToday=false,showActivity=false){const now=new Date(),today=localDate(),minute=now.getHours()*60+now.getMinutes(),toMin=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m},active=showActivity&&(x.type==='lesson'||x.date===today)&&toMin(x.start)<=minute&&minute<toMin(x.end),progress=active?Math.max(0,Math.min(100,Math.round(100*(minute-toMin(x.start))/(toMin(x.end)-toMin(x.start))))):0;const activityMarkup=active?`<div class="inline-activity"><span>◷ In corso · ${toMin(x.end)-minute} min rimanenti</span><div class="inline-progress"><div style="width:${progress}%"></div></div></div>`:'';const todayEvent=x.type==='event'&&highlightToday;const style=x.type==='lesson'?styleColor(findColor('subjects',x.subject,'#eaf2fc')):'background:#F4D8D4;border-color:'+(todayEvent?'#A73B50':'#DCA8AB')+';--today-border:#A73B50';return `<div class="card ${x.type==='lesson'?'personal-lesson':'school-event'}${todayEvent?' event-today':''}" style="${style}"><div class="time">${safe(x.start)}<br>${safe(x.end)}</div><div class="content">${todayEvent?'<span class="today-label">OGGI</span>':''}<strong>${safe(x.subject)}</strong>${x.classroom||x.room?`<div class="meta">${x.classroom?(x.type==='lesson'?'<span class="class-badge" style="'+styleColor(findColor('classes',x.classroom,'#eaf2fc'))+'">'+safe(x.classroom)+'</span>':'Classe '+safe(x.classroom)):''}${x.classroom&&x.room?' · ':''}${x.room?safe(x.room):''}</div>`:''}${x.note?`<div class="note">✎ ${safe(x.note)}</div>`:''}${activityMarkup}</div><div class="actions"><button class="small" data-action="edit" data-id="${safe(x.id)}" aria-label="Modifica">✎</button><button class="small" data-action="duplicate" data-id="${safe(x.id)}" aria-label="Duplica" title="Duplica">⧉</button><button class="small danger" data-action="remove" data-id="${safe(x.id)}" aria-label="Elimina">×</button></div></div>`};function list(a,showActivity=false){return a.length?a.sort((x,y)=>x.start.localeCompare(y.start)).map(x=>card(x,false,showActivity)).join(''):'<div class="empty">Nessuna voce inserita.</div>'};function lessonHours(entry){
+const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));function save(){beforeAgendaChange();localStorage.setItem(KEY,JSON.stringify(data));window.dispatchEvent(new Event('agenda-local-changed'));render()};function navigate(page){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===page));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('heading').textContent=({today:'Oggi',week:'Settimana',commitments:'Impegni',month:'Mese',settings:'Impostazioni',editor:'Modifica agenda'})[page];window.scrollTo(0,0);if(page==='settings'){renderSettings();renderBackupList();}if(page!=='editor')render()};function card(x,highlightToday=false,showActivity=false){const now=new Date(),today=localDate(),minute=now.getHours()*60+now.getMinutes(),toMin=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m},active=showActivity&&(x.type==='lesson'||x.date===today)&&toMin(x.start)<=minute&&minute<toMin(x.end),progress=active?Math.max(0,Math.min(100,Math.round(100*(minute-toMin(x.start))/(toMin(x.end)-toMin(x.start))))):0;const activityMarkup=active?`<div class="inline-activity"><span>◷ In corso · ${toMin(x.end)-minute} min rimanenti</span><div class="inline-progress"><div style="width:${progress}%"></div></div></div>`:'';const todayEvent=x.type==='event'&&highlightToday;const style=x.type==='lesson'?styleColor(findColor('subjects',x.subject,'#eaf2fc')):'background:#F4D8D4;border-color:'+(todayEvent?'#A73B50':'#DCA8AB')+';--today-border:#A73B50';return `<div class="card ${x.type==='lesson'?'personal-lesson':'school-event'}${todayEvent?' event-today':''}" style="${style}"><div class="time">${safe(x.start)}<br>${safe(x.end)}</div><div class="content">${todayEvent?'<span class="today-label">OGGI</span>':''}<strong>${safe(x.subject)}</strong>${x.classroom||x.room?`<div class="meta">${x.classroom?(x.type==='lesson'?'<span class="class-badge" style="'+styleColor(findColor('classes',x.classroom,'#eaf2fc'))+'">'+safe(x.classroom)+'</span>':'Classe '+safe(x.classroom)):''}${x.classroom&&x.room?' · ':''}${x.room?safe(x.room):''}</div>`:''}${x.note?`<div class="note">✎ ${safe(x.note)}</div>`:''}${activityMarkup}</div><div class="actions"><button type="button" class="card-menu-trigger" data-menu-id="${safe(x.id)}" aria-label="Azioni per ${safe(x.subject)}" aria-haspopup="menu" aria-expanded="false" title="Azioni">⋯</button></div></div>`};function list(a,showActivity=false){return a.length?a.sort((x,y)=>x.start.localeCompare(y.start)).map(x=>card(x,false,showActivity)).join(''):'<div class="empty">Nessuna voce inserita.</div>'};function lessonHours(entry){
  const toMinutes=t=>{const m=/^(\d{2}):(\d{2})$/.exec(t||'');return m?Number(m[1])*60+Number(m[2]):NaN};
  const minutes=toMinutes(entry.end)-toMinutes(entry.start);
  return Number.isFinite(minutes)&&minutes>0?minutes/60:0;
 }
 function formatHours(hours){return Number(hours.toFixed(2)).toLocaleString('it-IT',{maximumFractionDigits:2})}
-function render(){const now=new Date(),dow=now.getDay(),date=localDate();$('todayDate').textContent=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});const lessons=data.filter(x=>x.type==='lesson'&&!closureFor(date)&&Number(x.day)===dow);const currentTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');const extras=data.filter(x=>x.type==='event'&&x.date&&(x.date>date||(x.date===date&&(x.end||x.start||'00:00')>=currentTime))).sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));const lessonTotal=lessons.reduce((total,x)=>total+lessonHours(x),0);const lc=$('lc'),ec=$('ec');lc.hidden=lessonTotal<=0;lc.textContent=lessonTotal>0?'· '+formatHours(lessonTotal)+' ore':'';ec.hidden=extras.length===0;ec.textContent=extras.length?'· '+extras.length:'';$('todayLessons').innerHTML=closureFor(date)?'<div class="closure-banner">📅 '+safe(closureFor(date))+' — lezioni sospese</div>':list(lessons,true);$('todayExtras').innerHTML=extras.length?extras.map((x,i)=>`${i===0||extras[i-1].date!==x.date?`<div class="muted" style="margin-top:18px">${safe(new Date(x.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}</div>`:''}${card(x,x.date===date,true)}`).join(''):'<div class="empty">Nessun impegno in programma.</div>';$('weekList').innerHTML=renderWeekTable();const all=data.filter(x=>x.type==='event');
+function render(){const now=new Date(),dow=now.getDay(),date=localDate();$('todayDate').textContent=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});const lessons=data.filter(x=>x.type==='lesson'&&!closureFor(date)&&Number(x.day)===dow);const currentTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');const extras=data.filter(x=>x.type==='event'&&x.date&&(x.date>date||(x.date===date&&(x.end||x.start||'00:00')>=currentTime))).sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));const lessonTotal=lessons.reduce((total,x)=>total+lessonHours(x),0);const lc=$('lc'),ec=$('ec');lc.hidden=lessonTotal<=0;lc.textContent=lessonTotal>0?'· '+formatHours(lessonTotal)+' ore':'';ec.hidden=extras.length===0;ec.textContent=extras.length?'· '+extras.length:'';$('todayLessons').innerHTML=closureFor(date)?'<div class="closure-banner">📅 '+safe(closureFor(date))+' — lezioni sospese</div>':list(lessons,true);$('todayExtras').innerHTML=extras.length?extras.map((x,i)=>`${i===0||extras[i-1].date!==x.date?`<div class="section-date-label">${safe(new Date(x.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}</div>`:''}${card(x,x.date===date,true)}`).join(''):'<div class="empty">Nessun impegno in programma.</div>';$('weekList').innerHTML=renderWeekTable();const all=data.filter(x=>x.type==='event');
 const eventIsUpcoming=x=>x.date>date||(x.date===date&&(x.end||x.start||'00:00')>=currentTime);
 const upcoming=all.filter(eventIsUpcoming).sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
 const history=all.filter(x=>!eventIsUpcoming(x)).sort((a,b)=>b.date.localeCompare(a.date)||b.start.localeCompare(a.start));
-const renderEventGroups=items=>{let previousDate='';return items.map(x=>{const label=x.date!==previousDate?'<div class="muted" style="margin-top:18px">'+safe(new Date(x.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))+'</div>':'';previousDate=x.date;return label+card(x)}).join('')};
+const renderEventGroups=items=>{let previousDate='';return items.map(x=>{const label=x.date!==previousDate?'<div class="section-date-label">'+safe(new Date(x.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))+'</div>':'';previousDate=x.date;return label+card(x)}).join('')};
 $('commitmentList').innerHTML=all.length?'<h2 class="today-section-heading">In programma'+(upcoming.length?' <span class="today-section-count">· '+upcoming.length+'</span>':'')+'</h2>'+(upcoming.length?renderEventGroups(upcoming):'<div class="empty">Nessun impegno futuro.</div>')+(history.length?'<h2 class="today-section-heading" style="margin-top:28px">Impegni passati <span class="today-section-count">· '+history.length+'</span></h2>'+renderEventGroups(history):''):'<div class="empty">Nessun impegno inserito.</div>';renderMonth()};
 let monthShown=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 let monthDay=new Date().getDate();
@@ -127,8 +140,130 @@ function renderWeekTable(){
 }
 function xEnd(x){return x.end||''}
 $('weekList').addEventListener('click',e=>{const b=e.target.closest('[data-entry-id]');if(b)editEntry(b.dataset.entryId)});
-document.addEventListener('click',e=>{const b=e.target.closest('button[data-action][data-id]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='edit')editEntry(id);else if(b.dataset.action==='duplicate')duplicateEntry(id);else if(b.dataset.action==='remove')removeEntry(id)});
-function toggleFields(){const lesson=$('type').value==='lesson';$('weeklyFields').style.display=lesson?'block':'none';$('dateFields').style.display=lesson?'none':'block';$('date').required=!lesson;$('subjectLabel').textContent=lesson?'Materia':'Impegno';$('subjectLabel').htmlFor=lesson?'lessonSubject':'subject';$('lessonSubject').style.display=lesson?'block':'none';$('customLessonSubject').style.display=lesson&&$('lessonSubject').value==='__custom__'?'block':'none';$('customLessonSubject').required=lesson&&$('lessonSubject').value==='__custom__';$('customLessonClass').style.display=lesson&&$('lessonClass').value==='__custom__'?'block':'none';$('customLessonClass').required=lesson&&$('lessonClass').value==='__custom__';$('subject').style.display=lesson?'none':'block';$('subject').required=!lesson;$('customCommitment').required=!lesson&&$('subject').value==='__custom__';$('lessonClass').style.display=lesson?'block':'none';$('classroom').style.display=lesson?'none':'block';refreshTimes()};function openForm(id){editing=null;$('entryForm').reset();populateChoices();setRoom('');setEventClass('');setCommitment('');$('customLessonSubject').value='';$('customLessonClass').value='';$('presetNote').value='';setTime('start','08:20');setTime('end','09:20');$('date').value=localDate();$('day').value=String(new Date().getDay()||1);$('formHeading').textContent='Nuova voce';toggleFields();toggleCustomLessonSubject();toggleCustomLessonClass();navigate('editor')};function setSelectChoice(id,value){const el=$(id);if(value&&!Array.from(el.options).some(o=>o.value===value))el.add(new Option(value+' (già usato)',value));if(value)el.value=value}function editEntry(id){const x=data.find(x=>x.id===id);if(!x)return;editing=id;for(const k of ['type','day','date','classroom','note'])$(k).value=x[k]||'';populateChoices();setEventClass(x.classroom||'');setRoom(x.room||'');setLessonChoice('lessonClass','customLessonClass',x.type==='lesson'?x.classroom:'');setCommitment(x.type==='event'?x.subject||'':'');setLessonChoice('lessonSubject','customLessonSubject',x.type==='lesson'?x.subject:'');$('presetNote').value=config.notes.includes(x.note)?x.note:'';$('formHeading').textContent='Modifica voce';toggleFields();setTime('start',x.start);setTime('end',x.end);navigate('editor')};function conflictsFor(x){
+/* Agenda IPIA 4.9.50 — un solo menu azioni accessibile, sovrapposto fuori dalle card */
+let openCardMenuId=null;
+let openCardMenuTrigger=null;
+const cardMenuPopup=document.createElement('div');
+cardMenuPopup.className='card-action-popup';
+cardMenuPopup.id='cardActionPopup';
+cardMenuPopup.setAttribute('role','menu');
+cardMenuPopup.setAttribute('aria-label','Azioni attività');
+cardMenuPopup.hidden=true;
+cardMenuPopup.innerHTML='<button type="button" role="menuitem" data-card-command="edit"><span aria-hidden="true">✎</span> Modifica</button><button type="button" role="menuitem" data-card-command="duplicate"><span aria-hidden="true">⧉</span> Duplica</button><button type="button" role="menuitem" class="menu-danger" data-card-command="remove"><span aria-hidden="true">×</span> Elimina</button>';
+document.body.appendChild(cardMenuPopup);
+function closeCardMenu(returnFocus=false){
+ const trigger=openCardMenuTrigger;
+ if(trigger&&trigger.isConnected)trigger.setAttribute('aria-expanded','false');
+ cardMenuPopup.hidden=true;
+ openCardMenuId=null;
+ openCardMenuTrigger=null;
+ if(returnFocus&&trigger&&trigger.isConnected)trigger.focus();
+}
+function positionCardMenu(){
+ if(cardMenuPopup.hidden||!openCardMenuTrigger||!openCardMenuTrigger.isConnected){closeCardMenu();return}
+ const rect=openCardMenuTrigger.getBoundingClientRect();
+ const w=Math.min(226,window.innerWidth-24);
+ cardMenuPopup.style.width=w+'px';
+ const h=cardMenuPopup.offsetHeight;
+ let left=Math.max(12,Math.min(rect.right-w,window.innerWidth-w-12));
+ let top=rect.bottom+7;
+ if(top+h>window.innerHeight-12)top=rect.top-h-7;
+ top=Math.max(12,Math.min(top,window.innerHeight-h-12));
+ cardMenuPopup.style.left=left+'px';
+ cardMenuPopup.style.top=top+'px';
+}
+document.addEventListener('click',e=>{
+ const trigger=e.target.closest('button[data-menu-id]');
+ if(trigger){
+  const id=trigger.dataset.menuId;
+  if(openCardMenuId===id&&openCardMenuTrigger===trigger){closeCardMenu();return}
+  closeCardMenu();
+  openCardMenuId=id;openCardMenuTrigger=trigger;
+  trigger.setAttribute('aria-expanded','true');
+  cardMenuPopup.hidden=false;
+  positionCardMenu();
+  return;
+ }
+ const command=e.target.closest('#cardActionPopup [data-card-command]');
+ if(command&&openCardMenuId){
+  const id=openCardMenuId,action=command.dataset.cardCommand;
+  closeCardMenu();
+  if(action==='edit')editEntry(id);
+  else if(action==='duplicate')duplicateEntry(id);
+  else if(action==='remove')removeEntry(id);
+  return;
+ }
+ if(!e.target.closest('#cardActionPopup'))closeCardMenu();
+});
+document.addEventListener('keydown',e=>{
+ if(cardMenuPopup.hidden)return;
+ if(e.key==='Escape'){e.preventDefault();closeCardMenu(true);return}
+ if(e.key==='Tab'){closeCardMenu();return}
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+  const buttons=Array.from(cardMenuPopup.querySelectorAll('button'));
+  const idx=buttons.indexOf(document.activeElement);
+  const next=e.key==='ArrowDown'?(idx+1)%buttons.length:(idx+buttons.length-1)%buttons.length;
+  e.preventDefault();buttons[next].focus();
+ }
+});
+window.addEventListener('scroll',()=>{if(!cardMenuPopup.hidden)closeCardMenu()},{passive:true,capture:true});
+window.addEventListener('resize',()=>{if(!cardMenuPopup.hidden)closeCardMenu()});
+
+
+/* Agenda IPIA 4.9.53 — editor compatto: gruppi e riepilogo, stesso salvataggio */
+function selectEntryEditorTab(group){
+ const allowed=['basic','time','place','notes'];
+ if(!allowed.includes(group))return;
+ document.querySelectorAll('#entryForm [data-editor-group]').forEach(el=>{el.hidden=el.dataset.editorGroup!==group});
+ document.querySelectorAll('#entryForm [data-editor-tab]').forEach(btn=>{
+  const active=btn.dataset.editorTab===group;
+  btn.classList.toggle('active',active);
+  btn.setAttribute('aria-pressed',String(active));
+ });
+}
+function setCompactEntryType(type){
+ if(!['lesson','event'].includes(type))return;
+ $('type').value=type;
+ toggleFields();
+ updateCompactEntryEditor();
+}
+function updateCompactEntryEditor(){
+ const lesson=$('type').value==='lesson';
+ document.querySelectorAll('#entryForm [data-entry-kind]').forEach(btn=>{
+  const active=btn.dataset.entryKind===(lesson?'lesson':'event');
+  btn.classList.toggle('active',active);btn.setAttribute('aria-pressed',String(active));
+ });
+ const heading=$('entryBasicHeading');if(heading)heading.textContent=lesson?'Materia':'Tipo di impegno';
+ const chosen=(id,customId)=>$(id).value==='__custom__'?$(customId).value:($(id).selectedOptions[0]?.textContent||$(id).value);
+ const subject=chosen(lesson?'lessonSubject':'subject',lesson?'customLessonSubject':'customCommitment');
+ const classroom=chosen(lesson?'lessonClass':'classroom',lesson?'customLessonClass':'customClass');
+ const room=chosen('room','customRoom');
+ const date=$('date').value;
+ const day=($('day').selectedOptions[0]?.textContent||'');
+ const time=$('start').value+'–'+$('end').value;
+ const summary=$('entrySummary');
+ if(!summary)return;
+ $('entrySummarySubject').textContent=subject&&subject!=='Altro (scrivi)'?subject:'Attività da specificare';
+ $('entrySummaryWhen').textContent=(lesson?'Ogni '+day:date||'Data da definire')+' · '+time;
+ $('entrySummaryWhere').textContent=[classroom&&classroom!=='Altro (scrivi)'?classroom:'',room&&room!=='Altro (scrivi)'?room:''].filter(Boolean).join(' · ')||'Nessuna aula o classe indicata';
+ $('entrySummaryNote').textContent=$('note').value?'✎ '+$('note').value:'';
+ summary.hidden=!$('showEntrySummary').checked;
+}
+document.getElementById('entryFormTabs').addEventListener('click',event=>{
+ const tab=event.target.closest('[data-editor-tab]');
+ if(tab)selectEntryEditorTab(tab.dataset.editorTab);
+});
+document.getElementById('entryForm').addEventListener('click',event=>{
+ const btn=event.target.closest('button[data-entry-kind]');
+ if(btn)setCompactEntryType(btn.dataset.entryKind);
+});
+document.getElementById('entryForm').addEventListener('input',updateCompactEntryEditor);
+document.getElementById('entryForm').addEventListener('change',updateCompactEntryEditor);
+document.getElementById('entryForm').addEventListener('invalid',event=>{
+ const group=event.target.closest('[data-editor-group]');
+ if(group)selectEntryEditorTab(group.dataset.editorGroup);
+},true);
+function toggleFields(){const lesson=$('type').value==='lesson';$('weeklyFields').style.display=lesson?'block':'none';$('dateFields').style.display=lesson?'none':'block';$('date').required=!lesson;$('subjectLabel').textContent=lesson?'Materia':'Impegno';$('subjectLabel').htmlFor=lesson?'lessonSubject':'subject';$('lessonSubject').style.display=lesson?'block':'none';$('customLessonSubject').style.display=lesson&&$('lessonSubject').value==='__custom__'?'block':'none';$('customLessonSubject').required=lesson&&$('lessonSubject').value==='__custom__';$('customLessonClass').style.display=lesson&&$('lessonClass').value==='__custom__'?'block':'none';$('customLessonClass').required=lesson&&$('lessonClass').value==='__custom__';$('subject').style.display=lesson?'none':'block';$('subject').required=!lesson;$('customCommitment').required=!lesson&&$('subject').value==='__custom__';$('lessonClass').style.display=lesson?'block':'none';$('classroom').style.display=lesson?'none':'block';refreshTimes()};function openForm(id){editing=null;$('entryForm').reset();populateChoices();setRoom('');setEventClass('');setCommitment('');$('customLessonSubject').value='';$('customLessonClass').value='';$('presetNote').value='';setTime('start','08:20');setTime('end','09:20');$('date').value=localDate();$('day').value=String(new Date().getDay()||1);$('formHeading').textContent='Nuova voce';toggleFields();toggleCustomLessonSubject();toggleCustomLessonClass();navigate('editor');selectEntryEditorTab('basic');updateCompactEntryEditor()};function setSelectChoice(id,value){const el=$(id);if(value&&!Array.from(el.options).some(o=>o.value===value))el.add(new Option(value+' (già usato)',value));if(value)el.value=value}function editEntry(id){const x=data.find(x=>x.id===id);if(!x)return;editing=id;for(const k of ['type','day','date','classroom','note'])$(k).value=x[k]||'';populateChoices();setEventClass(x.classroom||'');setRoom(x.room||'');setLessonChoice('lessonClass','customLessonClass',x.type==='lesson'?x.classroom:'');setCommitment(x.type==='event'?x.subject||'':'');setLessonChoice('lessonSubject','customLessonSubject',x.type==='lesson'?x.subject:'');$('presetNote').value=config.notes.includes(x.note)?x.note:'';$('formHeading').textContent='Modifica voce';toggleFields();setTime('start',x.start);setTime('end',x.end);navigate('editor');selectEntryEditorTab('basic');updateCompactEntryEditor()};function conflictsFor(x){
  const overlaps=y=>x.start<y.end&&y.start<x.end;
  return data.filter(y=>y.id!==x.id&&overlaps(y)&&(
   x.type==='event'?(y.type==='event'&&y.date===x.date||y.type==='lesson'&&!closureFor(x.date)&&Number(y.day)===new Date(x.date+'T12:00:00').getDay()):
@@ -226,7 +361,7 @@ window.agendaCloudImport=function(x){
  data=x.entries;config=normalizeConfig(x.personalization);closures=normalizeClosures(x.closures);
  populateChoices();renderSettings();renderClosures();render();renderBackupList();
 };
-const APP_VERSION='4.9.47';
+const APP_VERSION='4.9.53';
 let latestAppVersion=null;const versionLabel=$('appVersionLabel');if(versionLabel)versionLabel.textContent=APP_VERSION;
 function versionParts(v){return String(v).split('.').map(x=>Number(x)||0)}
 function newerVersion(a,b){const aa=versionParts(a),bb=versionParts(b);for(let i=0;i<Math.max(aa.length,bb.length);i++){if((aa[i]||0)!==(bb[i]||0))return (aa[i]||0)>(bb[i]||0)}return false}
