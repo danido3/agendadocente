@@ -168,19 +168,19 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline-color:#8aa
 #commitments .today-section-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #commitments .today-section-count{display:inline-flex;align-items:center;justify-content:center;font:inherit;color:inherit;font-weight:inherit;line-height:1}
 
-/* TEST 4.9.34: pulsanti account Google */
+/* Agenda IPIA 4.9.34: pulsanti account Google */
 #firebaseLogin[hidden],#firebaseLogout[hidden]{display:none!important}
 #firebaseAuthStatus{overflow-wrap:anywhere}
 
-/* TEST 4.9.35: cloud action visibility */
+/* Agenda IPIA 4.9.35: cloud action visibility */
 #cloudUpload[hidden],#cloudDownload[hidden]{display:none!important}
 #cloudStatus{overflow-wrap:anywhere}
 
-/* TEST 4.9.36 */
+/* Agenda IPIA 4.9.36 */
 #autoSyncToggle[hidden]{display:none!important}
 #autoSyncStatus{overflow-wrap:anywhere}
 
-/* TEST 4.9.37 */
+/* Agenda IPIA 4.9.37 */
 #resolveCloudConflicts[hidden]{display:none!important}
 #cloudConflictPanel pre{font-size:12px;max-height:220px;overflow:auto}
 #cloudConflictPanel .setting-group{margin:10px 0;padding:12px;border:1px solid #dce4d7;border-radius:12px}
@@ -386,8 +386,194 @@ input::placeholder,textarea::placeholder{color:#89726B}
   #monthEntries .card .actions .small{padding:6px 5px;min-width:26px}
 }
 
-/* TEST 4.9.47 — palette facoltative per materie e classi */
+/* Agenda IPIA 4.9.47 — palette facoltative per materie e classi */
 .preset-colors{display:flex;flex-wrap:wrap;gap:8px;margin:-1px 0 13px 0;padding:0 2px 1px}
 .preset-swatch{background:var(--swatch);border:2px solid #98887F;border-radius:10px;width:34px;height:34px;min-width:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:#25312A;font-size:17px;font-weight:800;box-shadow:0 1px 3px #34261d1a}
 .preset-swatch.selected{border:3px solid #894328;box-shadow:0 0 0 2px #fff,0 0 0 4px #894328}
 .preset-swatch:focus-visible{outline:3px solid #894328;outline-offset:3px}
+
+/* Agenda IPIA 4.9.48 — intestazioni Linea rame */
+#today .today-section-heading,#commitmentList .today-section-heading,#monthDayTitle{display:flex;align-items:center;gap:9px;flex-wrap:wrap;color:var(--ink-warm);padding:4px 0 4px 12px;border-left:4px solid var(--terracotta);min-height:28px;line-height:1.35}
+#today .today-section-heading::after,#commitmentList .today-section-heading::after,#monthDayTitle::after{content:"";flex:1 1 20px;height:1px;background:#DFCDC3;margin-left:4px}
+#today .today-section-count,#commitmentList .today-section-count{font-size:12px;font-weight:750;line-height:1.3;color:var(--terracotta-dark);background:var(--sand-header);border-radius:999px;padding:3px 8px;white-space:nowrap}
+#today .today-section-count[hidden],#commitmentList .today-section-count[hidden]{display:none!important}
+#todayExtras .section-date-label,#commitmentList .section-date-label{display:flex;align-items:center;gap:8px;margin:18px 0 8px;padding:3px 0 3px 10px;border-left:3px solid var(--terracotta);color:var(--ink-warm);font-size:13px;font-weight:700;text-transform:capitalize}
+#todayExtras .section-date-label::after,#commitmentList .section-date-label::after{content:"";flex:1;height:1px;background:#DFCDC3}
+#monthDayTitle{margin:15px 0 10px;font-size:17px}
+@media(max-width:390px){#today .today-section-heading,#commitmentList .today-section-heading,#monthDayTitle{gap:6px;padding-left:9px}}
+
+/* Agenda IPIA 4.9.49 — calendario mensile Equilibrato.
+   Oggi: bordo corallo; selezionato: sfondo rame; pallini conservati. */
+#monthGrid .month-day{
+  background:#FFFFFF;
+  border:1px solid #EADCD3;
+  border-radius:11px;
+  color:#332E2B;
+}
+#monthGrid .month-day.is-closed:not(.selected){background:#F9E9E5}
+#monthGrid .month-day.is-today:not(.selected){
+  border:2px solid #A73B50;
+  color:#A73B50;
+}
+#monthGrid .month-day.is-today span:first-child{
+  font-weight:800;
+  text-decoration:none;
+}
+#monthGrid .month-day.selected{
+  background:#B9653E;
+  border:2px solid #894328;
+  color:#FFFFFF;
+  font-weight:800;
+}
+#monthGrid .month-day.selected.is-today{
+  outline:2px solid #A73B50;
+  outline-offset:2px;
+}
+#monthGrid .month-day.selected .lesson-dot{background:#FFFFFF}
+#monthGrid .month-day.selected .event-dot{background:#F9DACD!important}
+#monthGrid .month-day:focus-visible{outline:3px solid #894328;outline-offset:2px}
+
+/* Agenda IPIA 4.9.50 — menu compatto flottante per le azioni delle schede */
+.card .actions .card-menu-trigger{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;min-width:36px;min-height:36px;
+  padding:0;border-radius:10px;border:1px solid #E0D4CA;
+  background:#FFFFFFE8;color:#894328;font-size:26px;font-weight:800;
+  line-height:1;letter-spacing:1px;
+}
+.card .actions .card-menu-trigger[aria-expanded="true"]{background:#EFDED4;border-color:#B9653E}
+.card .actions .card-menu-trigger:focus-visible{outline:3px solid #B9653E;outline-offset:2px}
+.card-action-popup{
+  position:fixed;z-index:9999;
+  border:1px solid #DEC9BA;border-radius:14px;
+  padding:6px;background:#FFFFFF;
+  box-shadow:0 12px 32px #3E241F33;
+  display:flex;flex-direction:column;gap:2px;
+}
+.card-action-popup[hidden]{display:none!important}
+.card-action-popup button{
+  display:flex;align-items:center;gap:12px;
+  width:100%;min-height:44px;text-align:left;padding:10px 12px;
+  background:transparent;border-radius:9px;color:#332E2B;
+  font-size:14px;font-weight:650;
+}
+.card-action-popup button span{font-size:19px;color:#894328;display:inline-flex;justify-content:center;width:24px;flex:none}
+.card-action-popup button:hover,.card-action-popup button:focus-visible{background:#F7ECE5}
+.card-action-popup button.menu-danger{color:#A73B50;background:#FFF1F1}
+.card-action-popup button.menu-danger span{color:#A73B50}
+
+/* Agenda IPIA 4.9.51 — Schede Minimal: angoli 13px,
+   niente ombre, barretta interna; densità, font e popup invariati. */
+.card{
+  border-radius:13px;
+  border-width:2px;
+  border-style:solid;
+  box-shadow:none;
+}
+.card::before{
+  left:7px;
+  top:8px;
+  bottom:8px;
+  width:4px;
+  border-radius:999px;
+}
+.card.personal-lesson::before{background:#84A080}
+.card.school-event::before{background:#B9653E}
+.card.school-event.event-today::before{background:#A73B50}
+#todayLessons .card.personal-lesson,
+#todayExtras .card.school-event,
+#monthEntries .card,
+#commitmentList .card.school-event{
+  border-radius:13px;
+  box-shadow:none;
+  padding-left:17px;
+}
+@media(max-width:390px){
+  #todayLessons .card.personal-lesson,
+  #todayExtras .card.school-event,
+  #monthEntries .card,
+  #commitmentList .card.school-event{
+    padding-left:15px;
+  }
+}
+
+/* Agenda IPIA 4.9.52 — Impostazioni: schede moderne */
+#settings>h2{font-size:24px;letter-spacing:-.4px;color:#332E2B;margin:16px 0 18px}
+#settings>.settings-panel{
+  margin:12px 0 14px;
+  background:#FFFFFF;border:1px solid #E6D9CF;
+  border-radius:17px;box-shadow:0 3px 12px #5E362A0C;
+  overflow:hidden;
+}
+#settings>.settings-panel[open]{border:2px solid #B9653E;box-shadow:0 4px 18px #5E362A12}
+#settings>.settings-panel>summary{padding:15px 14px;gap:12px;min-height:71px}
+#settings>.settings-panel>summary strong{font-size:16px;line-height:1.3;color:#332E2B}
+#settings>.settings-panel>summary small{font-size:12px;color:#75675F;line-height:1.4;margin-top:4px}
+#settings>.settings-panel>summary .settings-symbol{
+  width:43px;height:43px;flex:0 0 43px;
+  border-radius:12px;background:#F6EEE7;color:#894328;
+  font-size:23px;display:grid;place-items:center;
+}
+#settings>.settings-panel[open]>summary .settings-symbol{background:#EFDED4}
+#settings>.settings-panel>summary::after{color:#894328}
+#settings>.settings-panel>.settings-panel-body{background:#FFFCFA;border-top:1px solid #E6D9CF;padding:14px 13px 18px}
+#settings .settings-subpanel{background:#FFFFFF;border:1px solid #E6D9CF;border-radius:12px;margin:10px 0}
+#settings .settings-subpanel>summary{color:#332E2B;font-weight:700;padding:13px}
+#settings .settings-subpanel[open]{border-color:#C9AB98}
+#settings .settings-subpanel>.settings-panel-body{background:#FFFCFA;border-top:1px solid #E6D9CF}
+#settings .settings-panel-body .setting-group{border-color:#E6D9CF;border-radius:13px}
+#settings .settings-category-nav{
+  display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 12px;
+}
+#settings .settings-category-nav button.settings-category{
+  background:#F4EAE3;color:#894328;
+  border:1px solid #E7D3C5;border-radius:999px;
+  font-size:12px;font-weight:700;
+  padding:9px 12px;margin:0;min-height:38px;
+}
+#settings .settings-category-nav button.settings-category.active{
+  background:#B9653E;border-color:#B9653E;color:#FFFFFF;
+}
+#settings .settings-category-nav button.settings-category:focus-visible{
+  outline:3px solid #894328;outline-offset:2px;
+}
+#settings .settings-category-content[hidden]{display:none!important}
+#settings .settings-category-content{margin-top:6px;background:#FFFFFF}
+#settings .settings-category-content h3{color:#332E2B;font-size:16px;margin-bottom:11px}
+@media(max-width:390px){
+ #settings>.settings-panel>summary{padding:13px 10px;gap:9px}
+ #settings>.settings-panel>.settings-panel-body{padding:11px 10px 15px}
+ #settings .settings-category-nav{gap:5px}
+ #settings .settings-category-nav button.settings-category{padding:8px 10px;font-size:12px}
+}
+
+/* Agenda IPIA 4.9.53 — modulo compatto per lezioni e impegni */
+#editor #entryForm{background:transparent;border:0;box-shadow:none;padding:0}
+#editor #formHeading{color:#332E2B;font-size:23px;margin:16px 0 14px}
+#editor .editor-native-kind{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#editor .editor-kind{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px;background:#EFDED4;border-radius:15px;margin:0 0 15px}
+#editor .editor-kind-button{min-width:0;min-height:48px;padding:10px 5px;border-radius:11px;background:transparent;color:#894328;font-size:13px;font-weight:750}
+#editor .editor-kind-button.active{background:#B9653E;color:#FFFFFF}
+#editor .editor-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 0 5px;margin:0 0 13px}
+#editor .editor-tabs::-webkit-scrollbar{display:none}
+#editor .editor-tab{white-space:nowrap;flex:none;background:#F4EAE3;color:#894328;border:1px solid #E7D3C5;border-radius:999px;min-height:38px;padding:8px 11px;font-size:12px;font-weight:700}
+#editor .editor-tab.active{background:#B9653E;border-color:#B9653E;color:#FFFFFF}
+#editor .editor-group{background:#FFFFFF;border:1px solid #E6D9CF;border-radius:16px;padding:15px 13px 17px;margin:0 0 15px}
+#editor .editor-group[hidden]{display:none!important}
+#editor .editor-group h3{display:flex;gap:9px;align-items:center;color:#332E2B;font-size:16px;font-weight:750;margin:0 0 14px}
+#editor .editor-group-icon{display:inline-grid;place-items:center;min-width:33px;height:33px;border-radius:10px;background:#F4E7DC;color:#894328;font-size:18px}
+#editor .editor-optional{margin-left:auto;color:#87736B;font-size:12px;font-weight:500}
+#editor .editor-group label{color:#6A5D57;font-weight:650}
+#editor .editor-group select,#editor .editor-group input{border-color:#D9C2B6;border-radius:11px;background:#FFFFFF;min-height:43px}
+#editor .editor-summary-toggle{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:12px 0 9px}
+#editor .editor-summary-toggle label{margin:0;font-size:13px;color:#332E2B}
+#editor .editor-summary-toggle input{width:20px;height:20px;flex:none;accent-color:#B9653E}
+#editor .editor-summary{padding:13px;border:1px solid #D5C2B6;border-left:4px solid #B9653E;border-radius:12px;background:#F8EEE8;color:#332E2B;margin:0 0 14px}
+#editor .editor-summary[hidden]{display:none!important}
+#editor .editor-summary strong{display:block;font-size:17px}
+#editor .editor-summary-detail{font-size:13px;margin-top:4px;color:#6A5D57;overflow-wrap:anywhere}
+#editor .editor-summary-detail:empty{display:none}
+#editor .editor-footer{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+#editor .editor-footer button{min-height:46px}
+#editor .editor-footer .primary{background:#B9653E;color:#FFFFFF}
+@media(max-width:390px){#editor .editor-kind-button{font-size:12px}#editor .editor-group{padding:12px 10px 15px}}
